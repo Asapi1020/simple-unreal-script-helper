@@ -1,0 +1,20 @@
+{
+	"Switch": {
+		"prefix": "switch",
+		"body": [
+			"switch (${1:expression})",
+			"{",
+			"    case ${2:expression2}:",
+			"        ${3}",
+			"        break;",
+			"",
+			"    case ${4:expression3}:",
+			"        ${5}",
+			"",
+			"    default:",
+			"        ${6}",
+			"}"
+		],
+		"description": "Snippet - switch"
+	}
+}

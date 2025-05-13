@@ -1,0 +1,115 @@
+{
+	"author": "Eliot van Uytfanghe(Based on Tyrann from Carl Calderon)",
+	"name": "UnrealScript",
+	"settings": [
+		{
+			"settings": {
+				"background": "#171E1F",
+				"caret": "#FFFFFF",
+				"foreground": "#C0C0C0",
+				"invisibles": "#2A2825",
+				"lineHighlight": "#4F57633B",
+				"selection": "#4F1E5F"
+			}
+		},
+		{
+			"scope": "comment",
+			"settings": {
+				"foreground": "#707E77"
+			}
+		},
+		{
+			"scope": "string",
+			"settings": {
+				"fontStyle": "normal",
+				"foreground": "#E1842F"
+			}
+		},
+		{
+			"scope": "constant.numeric",
+			"settings": {
+				"foreground": "#50ABD8"
+			}
+		},
+		{
+			"scope": "constant.language, storage.constant",
+			"settings": {
+				"foreground": "#EF0332"
+			}
+		},
+		{
+			"scope": "keyword.language.preprocessor, constant.language.preprocessor",
+			"settings": {
+				"background": "#222",
+				"foreground": "#EF0332"
+			}
+		},
+		{
+			"scope": "punctuation.language",
+			"settings": {
+				"foreground": "#ffffff"
+			}
+		},
+		{
+			"scope": "keyword",
+			"settings": {
+				"foreground": "#498091"
+			}
+		},
+		{
+			"scope": "keyword.operator",
+			"settings": {
+				"foreground": "#ccc"
+			}
+		},
+		{
+			"scope": "storage",
+			"settings": {
+				"fontStyle": "bold",
+				"foreground": "#A9CB36"
+			}
+		},
+		{
+			"scope": "storage.type",
+			"settings": {
+				"fontStyle": "normal",
+				"foreground": "#A9CB36"
+			}
+		},
+		{
+			"scope": "storage.modifier",
+			"settings": {
+				"fontStyle": "normal",
+				"foreground": "#498091"
+			}
+		},
+		{
+			"scope": "entity.name.function",
+			"settings": {
+				"foreground": "#9FB988"
+			}
+		},
+		{
+			"scope": "entity.name.tag",
+			"settings": {
+				"fontStyle": "bold",
+				"foreground": "#498091"
+			}
+		},
+		{
+			"scope": "entity.other.attribute-name",
+			"settings": {
+				"foreground": "#9FB988"
+			}
+		},
+		{
+			"scope": "invalid",
+			"settings": {
+				"background": "#701515",
+				"fontStyle": "bold",
+				"foreground": "#B3A3A3"
+			}
+		}
+	],
+	"uuid": "ADD8E412-EFD1-4AED-5421-D423QS1D23QS"
+}

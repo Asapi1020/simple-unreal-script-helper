@@ -1,0 +1,13 @@
+{
+	"BeginObject Snippet": {
+	  "prefix": "beginobject",
+	  "body": [
+		"Begin Object class=${1:ClassName} name=${2:ObjectName}",
+		"\t${3:// Properties}",
+		"End Object",
+		"Components.Add(${2:ObjectName})"
+	  ],
+	  "description": "Snippet - beginobject"
+	}
+  }
+  

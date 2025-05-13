@@ -1,0 +1,16 @@
+{
+	"UC Pawn Class": {
+		"prefix": "pawn",
+		"body": [
+			"class ${1:ClassName} extends ${2:SimplePawn};",
+			"",
+			"$2",
+			"",
+			"defaultproperties",
+			"{",
+			"    ",
+			"}"
+		],
+		"description": "Snippet - pawn"
+	}
+}

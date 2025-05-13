@@ -1,0 +1,307 @@
+{
+	"fileTypes": ["uc", "uci"],
+	"foldingStartMarker": "/\\*\\*|\\{\\s*$",
+	"foldingStopMarker": "\\*\\*/|^\\s*\\}",
+	"keyEquivalent": "^~U",
+	"name": "UnrealScript",
+	"patterns": [
+		{
+			"begin": "/\\*",
+			"captures": {
+				"0": {
+					"name": "punctuation.definition.comment.source.uc"
+				}
+			},
+			"patterns": [
+				{
+					"captures": {
+						"1": {
+							"name": "constant.language.comment.source.uc"
+						},
+						"2": {
+							"name": "entity.name.function.source.uc"
+						},
+						"3": {
+							"name": "constant.language.comment.source.uc"
+						}
+					},
+					"match": "(?i:(@parameter|@param)\\s*|@)([a-z-A-Z_][a-z-A-Z_0-9]+)|(?i:(TODO|HACK|FIXME|WARNING|NOTE|INFO|HELP)):"
+				}
+			],
+			"end": "\\*/",
+			"name": "comment.block.source.uc"
+		},
+		{
+			"match": "\\*/.*\\n",
+			"name": "invalid.illegal.stray-comment-end.source.uc"
+		},
+		{
+			"begin": "//",
+			"end": "$\\n?",
+			"name": "comment.line.double-slash.source.uc",
+			"patterns": [
+				{
+					"captures": {
+						"1": {
+							"name": "constant.language.comment.source.uc"
+						},
+						"2": {
+							"name": "entity.name.function.source.uc"
+						},
+						"3": {
+							"name": "constant.language.comment.source.uc"
+						}
+					},
+					"match": "(?i:(@parameter|@param)\\s*|@)([a-z-A-Z_][a-z-A-Z_0-9]+)|(?i:(TODO|HACK|FIXME|WARNING|NOTE|INFO|HELP)):"
+				}
+			]
+		},
+		{
+			"captures": {
+				"1": {
+					"name": "keyword.language.preprocessor.source.uc"
+				},
+				"2": {
+					"name": "constant.language.preprocessor.source.uc"
+				}
+			},
+			"match": "(`)(?i:(if|else|endif|define|undefine|include|isdefined|notdefined|log|logd|warn|assert))?(.*{0})"
+		},
+		{
+			"match": "\\b(?i:(extends|expands|within))\\b",
+			"name": "keyword.language.source.uc"
+		},
+		{
+			"match": "\\b(?i:(class|interface|event|function|state|ignores|const|local|struct|enum|operator|preoperator|postoperator))\\b",
+			"name": "keyword.language.source.uc"
+		},
+		{
+			"match": "\\b(?i:(structdefaultproperties|defaultproperties|cpptext|structcpptext|cppstruct|replication))\\b(?:\\s*i:\\s*\\{)?",
+			"name": "keyword.language.source.uc"
+		},
+		{
+			"captures": {
+				"1": {
+					"name": "storage.modifier.source.uc"
+				},
+				"3": {
+					"name": "storage.type.source.uc"
+				}
+			},
+			"match": "(?i:(dependson|implements|classgroup))(\\s*?\\((?'CLASS_NAME'\\s*?([a-z-A-Z_][a-z-A-Z_0-9]+)\\s*?,?)\\g'CLASS_NAME'*\\s*?\\)?)?"
+		},
+		{
+			"captures": {
+				"1": {
+					"name": "storage.modifier.source.uc"
+				},
+				"3": {
+					"name": "string.quoted.single.uc"
+				}
+			},
+			"match": "(?i:(hidecategories|showcategories|autocollapsecategories|dontautocollapsecategories|autoexpandcategories|dontsortcategories))(\\s*?\\((?'CLASS_NAME'\\s*?([a-z-A-Z_][a-z-A-Z_0-9]+)\\s*?,?)\\g'CLASS_NAME'*\\s*?\\)?)?"
+		},
+		{
+			"captures": {
+				"1": {
+					"name": "keyword.language.source.uc"
+				},
+				"3": {
+					"name": "string.quoted.single.uc"
+				},
+				"4": {
+					"name": "string.quoted.single.uc"
+				}
+			},
+			"match": "\\b(?i:(var))\\b(\\s*?\\(\\s*?([a-z-A-Z_][a-z-A-Z_0-9]+)\\s*?,?\\s*?([a-z-A-Z_][a-z-A-Z_0-9]+)\\s*?\\))?"
+		},
+		{
+			"captures": {
+				"1": {
+					"name": "storage.modifier.source.uc"
+				},
+				"3": {
+					"name": "string.quoted.single.uc"
+				}
+			},
+			"match": "\\b(?i:(config|dllbind|native|inherits))\\b(\\s*?\\(\\s*?([a-z-A-Z_][a-z-A-Z_0-9]+)\\s*?\\))?"
+		},
+		{
+			"match": "\\b(?i:(nativeonly|abstract|intrinsic|exportstructs|export|noexport|noexportheader|nativereplication|public|private|transient|nontransient|deprecated|editconst|final|simulated|out|localized|globalconfig|protected|auto|nousercreate|notplaceable|placeable|skip|coerce|iterator|immutable|immutablewhencooked|atomic|atomicwhencooked|interp|editoronly|reliable|unreliable|server|client|exec|editinline|editinlinenotify|editinlineuse|editinlinenew|noteditinlinenew|repnotify|optional|virtual|edithide|automated|cache|cacheexempt|noimport|noclear|protectedwrite|privatewrite|forcescriptorder|perobjectconfig|perobjectlocalized|init|hidedropdown|collapsecategories|dontcollapsecategories|safereplace|parseconfig|instanced|databinding|duplicatetransient|input|travel|edfindable|editconstarray|editfixedsize|editortextbox|nontransactional|serializetext|notforconsole|repretry|archetype|crosslevelactive|crosslevelpassive|long|strictconfig|k2call|k2override|k2pure|singular|demorecording|dllimport|latent))\\b",
+			"name": "storage.modifier.source.uc"
+		},
+		{
+			"match": "\\b(?i:(none|true|false|vect|rot|rng))\\b",
+			"name": "constant.language.source.uc"
+		},
+		{
+			"match": "\\b(?i:(default|super|global|static|const|self))\\b",
+			"name": "constant.language.source.uc"
+		},
+		{
+			"match": "\\b(?i:(byte|int|bool|array|map|delegate|button|class|float|name|string))\\b",
+			"name": "storage.type.source.uc"
+		},
+		{
+			"captures": {
+				"1": {
+					"name": "keyword.meta.source.uc"
+				},
+				"2": {
+					"name": "constant.language.meta.source.uc"
+				}
+			},
+			"match": "\\b(?i:(AllowAbstract|ArrayClamp|AutoComment|bShowOnlyWhenTrue|ClampMax|ClampMin|DisplayName|DMCOnly|EditCondition|FixedIncrement|FullyExpand|MaxPropertyDepth|MultilineWithMaxRows|Multiple|OrderIndex|RealTime|ScriptOrder|ToolTip|UIMax|UIMin)\\s*=([^|>]*))\\b"
+		},
+		{
+			"match": "\\b(?i:(Actor|ActorComponent|Component|Pawn|WorldInfo|PhysicalMaterial|SoundCue|ParticleSystem|SkeletalMeshComponent|Controller|PlayerController|DamageType|StaticMeshComponent|PlayerReplicationInfo|Canvas|HUD|Volume|PhysicsVolume|FluidSurfaceActor|Object|SpriteComponent|Inventory|PrimitiveComponent|ParticleSystemComponent|LightEnvironmentComponent|ForceFeedbackWaveform|AudioComponent|DynamicLightEnvironmentComponent|LightEnvironment|StaticMesh|MaterialInterface|LadderVolume|PlayerStart|CylinderComponent|InventoryManager|Weapon|Mesh|PlayerInput|GFxClikWidget|GFxObject|Material|WidgetBindings|AnimNodeSequence|MaterialInstanceConstant|Property|Teleporter|LocalMessage|Projectile|InterpGroup|FaceFXAnimSet|SkelControlBase|RB_BodyInstance|SequenceOp|SequenceAction|SequenceCondition|SequenceEvent|SequenceFrame|SequenceObject|SequenceOp|SequenceVariable|SequenceFrameWrapped|SequenceObjectHelper|AnimSequence))\\b",
+			"name": "storage.type.source.uc"
+		},
+		{
+			"match": "\\b(?i:(rotator|vector|scale|quat|qword|double|color|pointer|linearcolor|vector2d|vector4|twovectors|plane|intpoint|guid|box|boxspherebounds|matrix|cylinder|BoneAtom|TraceHitInfo|ImpactInfo|AnimSlotInfo|AnimSlotDesc|PhysEffectInfo|ActorReference|NavReference|BasedPosition|CollisionImpactData))\\b",
+			"name": "storage.struct.source.uc"
+		},
+		{
+			"match": "\\b(?i:(AlphaBlendType|EAxis|EInputEvent|EPhysics|ENetRole|ECollisionType|ETickingGroup|EDoubleClickDir|ETravelType|EMoveDir|EActorMetricsType))\\b",
+			"name": "storage.enum.source.uc"
+		},
+		{
+			"match": "\\b(?i:(MaxInt|RadToDeg|DegToRad|UnrRotToRad|RadToUnrRot|DegToUnrRot|UnrRotToDeg|INDEX_NONE|Pi|AspectRatio4x3|AspectRatio5x4|AspectRatio16x9|InvAspectRatio4x3|InvAspectRatio5x4|InvAspectRatio16x9|MINFLOORZ|ACTORMAXSTEPHEIGHT|TRACEFLAG_Bullet|TRACEFLAG_PhysicsVolumes|TRACEFLAG_SkipMovers|TRACEFLAG_Blocking|TRACEFLAG_ForceController))\\b",
+			"name": "storage.constant.source.uc"
+		},
+		{
+			"match": "\\b(?i:(filtereditoronly|if|else|break|continue|do|until|while|goto|assert|return|for|foreach|switch|case))\\b",
+			"name": "keyword.control.source.uc"
+		},
+		{
+			"match": "\\b(?i:(nameof|arraycount|enumcount))\\b",
+			"name": "constant.language.source.uc"
+		},
+		{
+			"match": "\\b((0(x|X)[0-9a-fA-F]*)|(([0-9]+\\.?[0-9]*)|(\\.[0-9]+))((e|E)(\\+|-)?[0-9]+)?)(F|f)?\\b",
+			"name": "constant.numeric.source.uc"
+		},
+		{
+			"match": "[?:+\\-/%*=<>^~!|&$@]+",
+			"name": "keyword.operator.symbolic.source.uc"
+		},
+		{
+			"match": "\\b(?i:(Dot|Cross|ClockwiseFrom))\\b",
+			"name": "keyword.operator.named.source.uc"
+		},
+		{
+			"match": "\\b(?i:(New))\\b",
+			"name": "keyword.control.source.uc"
+		},
+		{
+			"match": "([,.;\\(\\)\\[\\{}]]+)",
+			"name": "punctuation.language.source.uc"
+		},
+		{
+			"captures": {
+				"1": {
+					"name": "entity.name.function.source.uc"
+				}
+			},
+			"match": "([a-z-A-Z_][a-z-A-Z_0-9]*)\\s*?(\\()"
+		},
+		{
+			"begin": "\"",
+			"beginCaptures": {
+				"0": {
+					"name": "punctuation.definition.string.begin.uc"
+				}
+			},
+			"end": "\"",
+			"endCaptures": {
+				"0": {
+					"name": "punctuation.definition.string.end.uc"
+				}
+			},
+			"name": "string.quoted.double.uc",
+			"patterns": [
+				{
+					"include": "#string_escaped_char"
+				},
+				{
+					"include": "#string_placeholder"
+				}
+			]
+		},
+		{
+			"begin": "'",
+			"beginCaptures": {
+				"0": {
+					"name": "punctuation.definition.string.begin.uc"
+				}
+			},
+			"end": "'",
+			"endCaptures": {
+				"0": {
+					"name": "punctuation.definition.string.end.uc"
+				}
+			},
+			"name": "string.quoted.single.uc",
+			"patterns": [
+				{
+					"include": "#string_escaped_char"
+				}
+			]
+		}
+	],
+	"repository": {
+		"access": {
+			"match": "\\.[a-zA-Z_][a-zA-Z_0-9]*\\b(?!\\s*\\()",
+			"name": "variable.other.dot-access.uc"
+		},
+		"block": {
+			"begin": "\\{",
+			"end": "\\}",
+			"name": "meta.block.uc",
+			"patterns": [
+				{
+					"include": "#block_innards"
+				}
+			]
+		},
+		"block_innards": {
+			"patterns": []
+		},
+		"parens": {
+			"begin": "\\(",
+			"end": "\\)",
+			"name": "meta.parens.uc",
+			"patterns": [
+				{
+					"include": "$base"
+				}
+			]
+		},
+		"string_escaped_char": {
+			"patterns": [
+				{
+					"match": "\\\\(\\\\|[abefnprtv'\"?]|[0-3]\\d{,2}|[4-7]\\d?|x[a-fA-F0-9]{,2})",
+					"name": "constant.character.escape.c"
+				},
+				{
+					"match": "\\\\.",
+					"name": "invalid.illegal.unknown-escape.c"
+				}
+			]
+		},
+		"string_placeholder": {
+			"patterns": [
+				{
+					"match": "(?x)%\n    \t\t\t\t\t\t(\\d+\\$)?                             # field (argument #)\n    \t\t\t\t\t\t[#0\\- +']*                           # flags\n    \t\t\t\t\t\t[,;:_]?                              # separator character (AltiVec)\n    \t\t\t\t\t\t((-?\\d+)|\\*(-?\\d+\\$)?)?              # minimum field width\n    \t\t\t\t\t\t(\\.((-?\\d+)|\\*(-?\\d+\\$)?)?)?         # precision\n    \t\t\t\t\t\t(hh|h|ll|l|j|t|z|q|L|vh|vl|v|hv|hl)? # length modifier\n    \t\t\t\t\t\t[diouxXDOUeEfFgGaACcSspn%]           # conversion type\n    \t\t\t\t\t",
+					"name": "constant.other.placeholder.c"
+				},
+				{
+					"match": "%",
+					"name": "invalid.illegal.placeholder.c"
+				}
+			]
+		}
+	},
+	"scopeName": "source.unrealscript",
+	"uuid": "077E5343-191C-4618-BB9F-FED76FAD1B8D"
+}

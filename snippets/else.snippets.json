@@ -1,0 +1,7 @@
+{
+	"UC Else Statement": {
+		"prefix": "else",
+		"body": ["else", "{", "\t${1}", "}"],
+		"description": "Snippet - else"
+	}
+}

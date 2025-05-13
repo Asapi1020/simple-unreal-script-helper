@@ -1,0 +1,7 @@
+{
+	"UC If-Else Statement": {
+		"prefix": "ifelse",
+		"body": ["if ($1)", "{", "\t$2", "}", "else", "{", "\t$3", "}"],
+		"description": "Snippet - if ; else"
+	}
+}

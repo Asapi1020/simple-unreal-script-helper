@@ -1,0 +1,7 @@
+{
+	"UC Do Until Loop": {
+		"prefix": "do",
+		"body": ["do", "{", "\t$1", "} until(${2:true})"],
+		"description": "Snippet - do until"
+	}
+}

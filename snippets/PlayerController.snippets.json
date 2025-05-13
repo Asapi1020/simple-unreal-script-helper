@@ -1,0 +1,16 @@
+{
+	"UC Controller Class": {
+		"prefix": "controller",
+		"body": [
+			"class ${1:ClassName} extends ${2:SimpleController};",
+			"",
+			"$4",
+			"",
+			"defaultproperties",
+			"{",
+			"    InputClass=class'$2.$3'",
+			"}"
+		],
+		"description": "Snippet - controller"
+	}
+}

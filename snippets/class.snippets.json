@@ -1,0 +1,16 @@
+{
+	"UC Class Declaration": {
+		"prefix": "class",
+		"body": [
+			"class ${1:ClassName} extends ${2:Actor};",
+			"",
+			"${3:// Body...}",
+			"",
+			"defaultproperties",
+			"{",
+			"    ",
+			"}"
+		],
+		"description": "Snippet - class"
+	}
+}

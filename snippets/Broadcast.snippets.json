@@ -1,0 +1,7 @@
+{
+	"Broadcast Message": {
+		"prefix": "broadcast",
+		"body": ["WorldInfo.Game.Broadcast(${1:self}, ${2:Your message});"],
+		"description": "Snippet - broadcast"
+	}
+}

@@ -1,0 +1,7 @@
+{
+	"UC Else If Statement": {
+		"prefix": "elif",
+		"body": ["else if(${1})", "{", "\t${2}", "}"],
+		"description": "Snippet - else if"
+	}
+}

@@ -1,0 +1,12 @@
+{
+	"UC Exec Function Declaration": {
+		"prefix": "exec",
+		"body": [
+			"exec function ${1:FunctionName} (${2:Args})",
+			"{",
+			"\t${3:// body...};",
+			"}"
+		],
+		"description": "Snippet - exec function"
+	}
+}

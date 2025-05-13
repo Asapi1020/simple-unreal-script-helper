@@ -1,0 +1,7 @@
+{
+	"Struct": {
+		"prefix": "struct",
+		"body": ["struct ${1:StructName}", "{", "    ${2:// members}", "};"],
+		"description": "Snippet - struct"
+	}
+}

@@ -1,0 +1,12 @@
+{
+	"UC Function": {
+		"prefix": "function",
+		"body": [
+			"function ${1:FunctionName}(${2:Args})",
+			"{",
+			"\t${3:// body...}",
+			"}"
+		],
+		"description": "Snippet - function"
+	}
+}

@@ -1,0 +1,7 @@
+{
+	"UC Event Declaration": {
+		"prefix": "event",
+		"body": ["event ${1}(${2})", "{", "\t${3}", "}"],
+		"description": "Snippet - event"
+	}
+}

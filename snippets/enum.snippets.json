@@ -1,0 +1,7 @@
+{
+	"UC Enum Declaration": {
+		"prefix": "enum",
+		"body": ["enum ${1}", "{", "\t${2}", "};"],
+		"description": "Snippet - enum"
+	}
+}

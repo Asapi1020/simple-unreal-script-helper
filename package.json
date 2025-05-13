@@ -1,0 +1,150 @@
+{
+	"name": "unreal-script-ide",
+	"displayName": "Unreal Script IDE",
+	"version": "0.0.1",
+	"engines": {
+		"vscode": "^1.85.0"
+	},
+	"activationEvents": ["onStartupFinished"],
+	"main": "./dist/extension.js",
+	"contributes": {
+		"languages": [
+			{
+				"id": "UnrealScript",
+				"extensions": [".uc", ".uci"],
+				"aliases": ["UnrealScript", "unrealscript"],
+				"configuration": "./language-configuration.json"
+			}
+		],
+		"grammars": [
+			{
+				"language": "UnrealScript",
+				"scopeName": "source.unrealscript",
+				"path": "./syntaxes/UnrealScript.tmLanguage.json",
+				"fileTypes": ["uc", "uci"]
+			}
+		],
+		"themes": [
+			{
+				"label": "UnrealScript",
+				"uiTheme": "vs-dark",
+				"path": "./themes/UnrealScript-color-theme.json"
+			}
+		],
+		"snippets": [
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/beginObject.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/Broadcast.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/class.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/cpptext.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/defaultproperties.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/do-until.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/elif.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/else.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/enum.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/event.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/execFunction.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/for.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/foreach.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/function.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/GameInfo.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/HUD.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/if-else.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/if.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/log.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/Pawn.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/PlayerController.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/simulatedEvent.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/simulatedFunction.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/struct.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/switch.snippets.json"
+			},
+			{
+				"language": "UnrealScript",
+				"path": "./snippets/while.snippets.json"
+			}
+		]
+	},
+	"scripts": {
+		"compile": "tsc -p ."
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"@types/node": "^22.15.17",
+		"typescript": "^5.8.3",
+		"vscode": "^1.1.37"
+	}
+}

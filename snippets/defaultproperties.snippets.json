@@ -1,0 +1,7 @@
+{
+	"UC DefaultProperties Block": {
+		"prefix": "defaultproperties",
+		"body": ["DefaultProperties", "{", "\t${1://defaults}", "}"],
+		"description": "Snippet - defaultproperties"
+	}
+}
