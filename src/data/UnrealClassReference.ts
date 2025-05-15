@@ -1,5 +1,10 @@
 import * as vscode from "vscode";
-import type { SymbolEntity, VariableBase } from "./SymbolEntity";
+import type { ClassesCollector } from "../parser/ClassesCollector";
+import type {
+	SerializableClass,
+	SymbolEntity,
+	VariableBase,
+} from "./SymbolEntity";
 import type { UnrealConst } from "./UnrealConst";
 import type { UnrealData } from "./UnrealData";
 import type { UnrealFunction } from "./UnrealFunction";
@@ -7,12 +12,12 @@ import type { UnrealStruct } from "./UnrealStruct";
 import type { UnrealVariable } from "./UnrealVariable";
 import { printToPanel } from "./data";
 
-export class ClassReference implements SymbolEntity {
+export class ClassReference {
 	private name: string;
 	private description: string;
 	private fileName: string;
 	private parentClassName: string;
-	private collectorReference: UnrealData;
+	private collectorReference: ClassesCollector;
 
 	private childrenClasses: ClassReference[] = [];
 	private functions: UnrealFunction[] = [];
@@ -27,7 +32,7 @@ export class ClassReference implements SymbolEntity {
 		parentClassName: string,
 		description: string,
 		fileName: string,
-		collectorReference: UnrealData,
+		collectorReference: ClassesCollector,
 	) {
 		this.name = name;
 		this.description = description;
@@ -145,7 +150,7 @@ export class ClassReference implements SymbolEntity {
 		return parentClass?.getVariable(name) ?? null;
 	}
 
-	public setCollectorReference(collectorReference: UnrealData): void {
+	public setCollectorReference(collectorReference: ClassesCollector): void {
 		this.collectorReference = collectorReference;
 	}
 

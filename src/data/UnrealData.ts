@@ -5,8 +5,6 @@ import { UnrealFunction } from "./UnrealFunction";
 import { UnrealStruct } from "./UnrealStruct";
 import { UnrealVariable } from "./UnrealVariable";
 
-export type AssetEntry = [string, string]; // [ClassName, AssetName]
-
 export interface GetObjectOptions {
 	hasNoClasses?: boolean;
 	hasNoFunctions?: boolean;
@@ -47,27 +45,6 @@ export class UnrealData {
 
 	private inbuiltFunctions: UnrealFunction[] = [];
 	private inbuiltVariables: VariableBase[] = [];
-
-	private assets: AssetEntry[] | null = null;
-
-	public addClass(
-		className: string,
-		parentClass: string,
-		description: string,
-		fileName: string,
-	): ClassReference | undefined {
-		if (!this.getClass(className)) {
-			const classReference = new ClassReference(
-				className,
-				parentClass,
-				description,
-				fileName,
-				this,
-			);
-			this.classes.push(classReference);
-			return classReference;
-		}
-	}
 
 	public linkClasses(): void {
 		for (const classReference of this.classes) {
