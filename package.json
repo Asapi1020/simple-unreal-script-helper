@@ -1,6 +1,6 @@
 {
 	"name": "unreal-script-ide",
-	"displayName": "Unreal Script IDE",
+	"displayName": "Simple Unreal Script Extension",
 	"version": "0.0.1",
 	"engines": {
 		"vscode": "^1.85.0"
