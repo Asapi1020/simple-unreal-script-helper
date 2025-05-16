@@ -15,6 +15,8 @@ export class UnrealPlugin {
 	private isBuiltForCurrentFile = false;
 	private isFirstTime = true;
 	private isStillParsingClasses = true;
+	private isWantedToGoToDefinition = false;
+	private isWantedToAutocomplete = false;
 
 	private eventManager: EventManager | null = null;
 	private fileNames: string[] = [];
@@ -48,7 +50,7 @@ export class UnrealPlugin {
 			return;
 		}
 
-		this.unrealData.completionClass = null;
+		this.unrealData.clearCompletionClass();
 		this.isBuiltForCurrentFile = true;
 
 		if (this.isFirstTime) {
@@ -78,7 +80,7 @@ export class UnrealPlugin {
 				folders ?? [],
 				true,
 			);
-			await collector.start();
+			this.handleThreads(editor, collector);
 			return;
 		}
 
@@ -90,10 +92,7 @@ export class UnrealPlugin {
 		) {
 			console.log("start parsing file:", fileName);
 			this.fileNames.push(fileName);
-
-			// const thread = startFunctionCollector(fileName);
-			// collectorThreads.push(thread);
-			// handleThreads(collectorThreads, editor);
+			this.addFunctionCollectorThread(fileName);
 			return;
 		}
 
@@ -206,5 +205,44 @@ export class UnrealPlugin {
 		}
 		window.setStatusBarMessage("Just a moment...");
 		return false;
+	}
+
+	private async addFunctionCollectorThread(fileName: string): Promise<void> {
+		const collector = new ClassesCollector(this.context, fileName, [], false);
+		await collector.start();
+	}
+
+	private async handleThreads(
+		editor: vscode.TextEditor,
+		collector: ClassesCollector,
+	): Promise<void> {
+		await collector.start();
+
+		if (this.isStillParsingClasses) {
+			console.log("Finished parsing classes, start parsing current file");
+			this.isStillParsingClasses = false;
+			this.unrealData.linkClasses();
+			this.onActivated(editor);
+		} else if (this.isWantedToGoToDefinition) {
+			console.log("wanted to go to definition!");
+			this.isWantedToGoToDefinition = false;
+			await vscode.commands.executeCommand("editor.action.revealDefinition");
+		} else if (this.isWantedToAutocomplete) {
+			console.log("wanted to auto-complete!");
+			this.isWantedToAutocomplete = false;
+			await vscode.commands.executeCommand("hideSuggestWidget");
+			await vscode.commands.executeCommand("editor.action.triggerSuggest");
+		} else if (this.isBuiltForCurrentFile) {
+			this.isBuiltForCurrentFile = false;
+			const classReference = this.unrealData.getClassFromFileName(
+				editor.document.fileName,
+			);
+			if (!classReference) {
+				console.warn("classReference is null");
+				return;
+			}
+			this.unrealData.setCompletionsFromClass(classReference);
+			this.unrealData.saveCompletionsToFile(editor.document.fileName);
+		}
 	}
 }

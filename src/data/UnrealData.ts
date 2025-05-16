@@ -41,7 +41,7 @@ export class UnrealData {
 	private functions: UnrealFunction[] = [];
 	private variables: VariableBase[] = [];
 
-	public completionClass: ClassReference | null = null;
+	private completionClass: ClassReference | null = null;
 
 	private inbuiltFunctions: UnrealFunction[] = [];
 	private inbuiltVariables: VariableBase[] = [];
@@ -430,6 +430,12 @@ export class UnrealData {
 		};
 	}
 
+	public setCompletionsFromClass(entity: SymbolEntity): void {
+		const completion = this.getCompletionsFromClass(entity);
+		this.functions = completion.functions;
+		this.variables = completion.variables;
+	}
+
 	public getFunctionsFromClass(classReference: ClassReference): {
 		functions: UnrealFunction[];
 		message: string;
@@ -482,5 +488,9 @@ export class UnrealData {
 			this.functions = completion.functions;
 			this.variables = completion.variables;
 		}
+	}
+
+	public clearCompletionClass(): void {
+		this.completionClass = null;
 	}
 }

@@ -1,5 +1,6 @@
 {
-	"name": "unreal-script-ide",
+	"name": "simple-unreal-script-extension",
+	"publisher": "asapi 1020",
 	"displayName": "Simple Unreal Script Extension",
 	"version": "0.0.1",
 	"engines": {
@@ -138,6 +139,7 @@
 			}
 		]
 	},
+	"enabledApiProposals": ["extensionRuntime"],
 	"scripts": {
 		"compile": "tsc -p ."
 	},

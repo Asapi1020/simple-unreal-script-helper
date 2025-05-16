@@ -1,7 +1,6 @@
 import { Event } from "./Event";
 
 export class EventManager {
-	readonly parsingFinished = new Event<() => void>();
 	readonly goToDefinition = new Event<
 		(leftLine: string, word: string, fullLine: string) => void
 	>();

@@ -1,12 +1,12 @@
 import fs from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import type * as vscode from "vscode";
+import * as vscode from "vscode";
 import type { SerializableClass } from "../data/SymbolEntity";
 import { ClassReference } from "../data/UnrealClassReference";
 
 export class ClassesCollector {
-	private collectorThreads: Promise<void>[] = [];
+	public activeThreads: Promise<void>[] = [];
 	private classes: ClassReference[] = [];
 	private srcFolder = "";
 
@@ -22,6 +22,7 @@ export class ClassesCollector {
 			for (const folder of this.openFolderArr) {
 				if (folder.includes("Development\\Src")) {
 					console.log("src folder found:", folder);
+					this.srcFolder = folder;
 					if (await this.cacheExists(folder)) {
 						console.log("cache exists. Loading...");
 						await this.loadClassesFromCache();
@@ -39,8 +40,8 @@ export class ClassesCollector {
 			}
 		}
 
-		await Promise.all(this.collectorThreads);
-		console.debug("classes: ", this.classes.length);
+		await this.handleThreads();
+		console.debug("parsed classes: ", this.classes.length);
 	}
 
 	public getClass(className: string): ClassReference | null {
@@ -73,7 +74,7 @@ export class ClassesCollector {
 			const fullPath = `${path}/${entry.name}`;
 			if (entry.isFile() && entry.name.endsWith(".uc")) {
 				const thread = this.saveClasses(fullPath);
-				this.collectorThreads.push(thread);
+				this.activeThreads.push(thread);
 			} else if (entry.isDirectory()) {
 				await this.getClasses(fullPath);
 			}
@@ -90,7 +91,7 @@ export class ClassesCollector {
 				`${name}.uc`,
 			);
 			const thread = this.saveClasses(filePath);
-			this.collectorThreads.push(thread);
+			this.activeThreads.push(thread);
 		}
 	}
 
@@ -128,7 +129,8 @@ export class ClassesCollector {
 	}
 
 	private async cacheExists(folder: string): Promise<boolean> {
-		const cachePath = `${folder}/classes_cache.json`;
+		const cachePath = `${folder}\\classes_cache.json`;
+		console.debug("Checking cache path:", cachePath);
 		return fs.promises
 			.access(cachePath)
 			.then(() => true)
@@ -136,7 +138,7 @@ export class ClassesCollector {
 	}
 
 	private async loadClassesFromCache(): Promise<void> {
-		const path = `${this.srcFolder}/classes_cache.json`;
+		const path = `${this.srcFolder}\\classes_cache.json`;
 		try {
 			await fs.promises.access(path);
 
@@ -159,5 +161,68 @@ export class ClassesCollector {
 		} catch (err) {
 			console.warn("No cache found or error loading:", err);
 		}
+	}
+
+	private async handleThreads() {
+		let disposed = false;
+		let disposable: vscode.Disposable | undefined;
+
+		const showStatus = (i = 0, dir = 1) => {
+			if (disposed) return;
+
+			const before = i % 8;
+			const after = 7 - before;
+			const status = `UnrealScriptAutocomplete is Parsing [${" ".repeat(before)}=${" ".repeat(after)}]`;
+
+			if (disposable) {
+				disposable.dispose();
+			}
+			disposable = vscode.window.setStatusBarMessage(status);
+
+			if (this.activeThreads.length > 0) {
+				setTimeout(() => {
+					showStatus(i + dir, before === 0 ? 1 : after === 0 ? -1 : dir);
+				}, 100);
+			}
+		};
+
+		showStatus();
+
+		try {
+			await Promise.all(this.activeThreads);
+		} catch (error) {
+			console.error("Error during parsing:", error);
+		}
+
+		disposed = true;
+		if (disposable) {
+			disposable.dispose();
+		}
+
+		await this.saveClassesToCache();
+	}
+
+	private async saveClassesToCache(): Promise<void> {
+		if (this.srcFolder) {
+			const filePath = path.join(this.srcFolder, "classes_cache.json");
+			const json = JSON.stringify(
+				this.classes,
+				ClassesCollector.removeCircularReferences(),
+				2,
+			);
+			fs.writeFileSync(filePath, json, "utf-8");
+			console.debug("Classes saved to cache.", filePath);
+		}
+	}
+
+	private static removeCircularReferences() {
+		const seen = new WeakSet();
+		return (_key: string, value: unknown) => {
+			if (typeof value === "object" && value !== null) {
+				if (seen.has(value)) return undefined;
+				seen.add(value);
+			}
+			return value;
+		};
 	}
 }
