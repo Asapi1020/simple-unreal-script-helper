@@ -2,11 +2,13 @@ import * as vscode from "vscode";
 import type { ClassReference } from "../data/UnrealClassReference";
 import type { GetObjectOptions, UnrealData } from "../data/UnrealData";
 import { ClassesCollector } from "../parser/ClassesCollector";
+import { FunctionsCollector } from "../parser/FunctionsCollector";
+import { UnrealCompletionProvider } from "../parser/UnrealCompletionProvider";
 import { EventManager } from "./EventManager";
 
 export function isUnrealScriptFile(document: vscode.TextDocument): boolean {
 	return (
-		document.languageId === "unrealscript" || document.fileName.endsWith(".uc")
+		document.languageId === "UnrealScript" || document.fileName.endsWith(".uc")
 	);
 }
 
@@ -40,12 +42,30 @@ export class UnrealPlugin {
 
 			const editor = vscode.window.activeTextEditor;
 			if (editor && editor.document === document) {
-				this.onActivated(editor);
+				this.activated(editor);
 			}
 		});
 	}
 
-	private async onActivated(editor: vscode.TextEditor): Promise<void> {
+	public onActivated(): vscode.Disposable {
+		return vscode.window.onDidChangeActiveTextEditor((editor) => {
+			if (editor) {
+				this.activated(editor);
+			}
+		});
+	}
+
+	public onCompletion(): vscode.Disposable {
+		return vscode.languages.registerCompletionItemProvider(
+			{ language: "UnrealScript", pattern: "**/*.uc" },
+			new UnrealCompletionProvider(this.unrealData),
+			".",
+			" ",
+			"\t",
+		);
+	}
+
+	private async activated(editor: vscode.TextEditor): Promise<void> {
 		if (!isUnrealScriptFile(editor.document)) {
 			return;
 		}
@@ -74,13 +94,8 @@ export class UnrealPlugin {
 			const folders = vscode.workspace.workspaceFolders?.map(
 				(folder) => folder.uri.fsPath,
 			);
-			const collector = new ClassesCollector(
-				this.context,
-				"",
-				folders ?? [],
-				true,
-			);
-			this.handleThreads(editor, collector);
+			const collector = new ClassesCollector("", folders ?? [], true);
+			this.handleClassesCollector(editor, collector);
 			return;
 		}
 
@@ -92,7 +107,7 @@ export class UnrealPlugin {
 		) {
 			console.log("start parsing file:", fileName);
 			this.fileNames.push(fileName);
-			this.addFunctionCollectorThread(fileName);
+			this.handleFunctionsCollector(fileName);
 			return;
 		}
 
@@ -207,22 +222,34 @@ export class UnrealPlugin {
 		return false;
 	}
 
-	private async addFunctionCollectorThread(fileName: string): Promise<void> {
-		const collector = new ClassesCollector(this.context, fileName, [], false);
-		await collector.start();
-	}
-
-	private async handleThreads(
+	private async handleClassesCollector(
 		editor: vscode.TextEditor,
 		collector: ClassesCollector,
 	): Promise<void> {
-		await collector.start();
+		await collector.start(this.context);
+		this.unrealData.addClasses(collector.returnClasses());
+		this.handleCollector(editor);
+	}
 
+	private async handleFunctionsCollector(fileName: string): Promise<void> {
+		const collector = new FunctionsCollector(fileName);
+		await collector.start();
+		const properties = collector.returnProperties();
+		this.unrealData.addFunctions(properties.functions);
+		this.unrealData.addVariables([
+			...properties.variables,
+			...properties.consts,
+			...properties.structs,
+			...properties.structVariables,
+		]);
+	}
+
+	private async handleCollector(editor: vscode.TextEditor): Promise<void> {
 		if (this.isStillParsingClasses) {
 			console.log("Finished parsing classes, start parsing current file");
 			this.isStillParsingClasses = false;
 			this.unrealData.linkClasses();
-			this.onActivated(editor);
+			this.activated(editor);
 		} else if (this.isWantedToGoToDefinition) {
 			console.log("wanted to go to definition!");
 			this.isWantedToGoToDefinition = false;

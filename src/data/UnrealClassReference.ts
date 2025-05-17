@@ -1,12 +1,8 @@
 import * as vscode from "vscode";
 import type { ClassesCollector } from "../parser/ClassesCollector";
-import type {
-	SerializableClass,
-	SymbolEntity,
-	VariableBase,
-} from "./SymbolEntity";
+import { FunctionsCollector } from "../parser/FunctionsCollector";
+import type { VariableBase } from "./SymbolEntity";
 import type { UnrealConst } from "./UnrealConst";
-import type { UnrealData } from "./UnrealData";
 import type { UnrealFunction } from "./UnrealFunction";
 import type { UnrealStruct } from "./UnrealStruct";
 import type { UnrealVariable } from "./UnrealVariable";
@@ -164,18 +160,15 @@ export class ClassReference {
 		this.linkToParent();
 	}
 
-	public parseMe(): void {
-		const view = vscode.window.activeTextEditor;
-		if (!view) {
-			return;
-		}
-
-		// TODO: ここの処理を実装する
-		// this.collectorReference.addFunctionCollectorThread(this.fileName);
-		// this.collectorReference.handleThreads(
-		// 	this.collectorReference.collectorThreads,
-		// 	view,
-		// );
+	public async parseMe(): Promise<void> {
+		const collector = new FunctionsCollector(this.fileName);
+		await collector.start();
+		const properties = collector.returnProperties();
+		this.functions = properties.functions;
+		this.variables = properties.variables;
+		this.consts = properties.consts;
+		this.structs = properties.structs;
+		this.bWasParsed = true;
 	}
 
 	public insertDynamicSnippet(view: vscode.TextEditor): void {

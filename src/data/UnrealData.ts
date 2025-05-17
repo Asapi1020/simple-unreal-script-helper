@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import type { ClassesCollector } from "../parser/ClassesCollector";
 import type { SymbolEntity, VariableBase } from "./SymbolEntity";
 import { ClassReference } from "./UnrealClassReference";
 import { UnrealFunction } from "./UnrealFunction";
@@ -35,7 +36,6 @@ export type ObjectData = { entity: SymbolEntity; num?: number };
 
 export class UnrealData {
 	private classes: ClassReference[] = [];
-
 	private completionsForFile: Completion[] = [];
 	private fileNames: string[] = [];
 	private functions: UnrealFunction[] = [];
@@ -45,6 +45,8 @@ export class UnrealData {
 
 	private inbuiltFunctions: UnrealFunction[] = [];
 	private inbuiltVariables: VariableBase[] = [];
+
+	constructor(private context: vscode.ExtensionContext) {}
 
 	public linkClasses(): void {
 		for (const classReference of this.classes) {
@@ -365,7 +367,7 @@ export class UnrealData {
 							.includes(options.word.toLowerCase()),
 					)
 					.map((classReference) => {
-						return `${classReference.getName()}\tClass${classReference.getName()}`;
+						return classReference.getName();
 					});
 
 		const localVariableCompletions = options.localVariables
@@ -492,5 +494,46 @@ export class UnrealData {
 
 	public clearCompletionClass(): void {
 		this.completionClass = null;
+	}
+
+	public addClasses(classes: ClassReference[]): void {
+		const newClasses = classes.filter(
+			(classReference) =>
+				!this.classes.some(
+					(existingClass) =>
+						existingClass.getName() === classReference.getName(),
+				),
+		);
+		this.classes.push(...newClasses);
+		console.debug(
+			`Added ${newClasses.length} classes to UnrealData. Now ${this.classes.length} classes.`,
+		);
+	}
+
+	public addFunctions(functions: UnrealFunction[]): void {
+		const newFunctions = functions.filter(
+			(func) =>
+				!this.functions.some(
+					(existingFunction) => existingFunction.getName() === func.getName(),
+				),
+		);
+		this.functions.push(...newFunctions);
+		console.debug(
+			`Added ${newFunctions.length} functions to UnrealData. Now ${this.functions.length} functions.`,
+		);
+	}
+
+	public addVariables(variables: VariableBase[]): void {
+		const newVariables = variables.filter(
+			(variable) =>
+				!this.variables.some(
+					(existingVariable) =>
+						existingVariable.getName() === variable.getName(),
+				),
+		);
+		this.variables.push(...newVariables);
+		console.debug(
+			`Added ${newVariables.length} variables to UnrealData. Now ${this.variables.length} variables.`,
+		);
 	}
 }

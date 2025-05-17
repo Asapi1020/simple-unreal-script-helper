@@ -11,13 +11,12 @@ export class ClassesCollector {
 	private srcFolder = "";
 
 	constructor(
-		private context: vscode.ExtensionContext,
-		private filename: string,
+		private fileName: string,
 		private openFolderArr: string[],
 		private isFirst: boolean,
 	) {}
 
-	public async start(): Promise<void> {
+	public async start(context: vscode.ExtensionContext): Promise<void> {
 		if (this.isFirst) {
 			for (const folder of this.openFolderArr) {
 				if (folder.includes("Development\\Src")) {
@@ -29,19 +28,18 @@ export class ClassesCollector {
 					} else {
 						console.log("no cache. parsing...");
 						await this.getClasses(folder);
-						await this.getInbuiltClasses();
+						await this.getInbuiltClasses(context);
 					}
 					break;
 				}
 			}
 		} else {
-			if (this.filename) {
-				await this.saveClasses(this.filename);
+			if (this.fileName) {
+				await this.saveClasses(this.fileName);
 			}
 		}
 
 		await this.handleThreads();
-		console.debug("parsed classes: ", this.classes.length);
 	}
 
 	public getClass(className: string): ClassReference | null {
@@ -67,6 +65,10 @@ export class ClassesCollector {
 		}
 	}
 
+	public returnClasses(): ClassReference[] {
+		return this.classes;
+	}
+
 	private async getClasses(path: string): Promise<void> {
 		const entries = await fs.promises.readdir(path, { withFileTypes: true });
 
@@ -81,11 +83,13 @@ export class ClassesCollector {
 		}
 	}
 
-	private async getInbuiltClasses(): Promise<void> {
+	private async getInbuiltClasses(
+		context: vscode.ExtensionContext,
+	): Promise<void> {
 		const inbuilt = ["Array", "Class", "HiddenFunctions"];
 		for (const name of inbuilt) {
 			const filePath = path.join(
-				this.context.extensionPath,
+				context.extensionPath,
 				"src",
 				"in-built-classes",
 				`${name}.uc`,
@@ -95,10 +99,10 @@ export class ClassesCollector {
 		}
 	}
 
-	private async saveClasses(filename: string): Promise<void> {
+	private async saveClasses(fileName: string): Promise<void> {
 		let description = "";
 		const inbuiltClasses = ["Array", "Class", "HiddenFunctions"];
-		const lines = (await readFile(filename, "utf-8")).split(/\r?\n/);
+		const lines = (await readFile(fileName, "utf-8")).split(/\r?\n/);
 
 		for (const line of lines) {
 			description += `${line}\n`;
@@ -106,8 +110,8 @@ export class ClassesCollector {
 			const match = description.match(/class\s+\w+\s+extends\s+(\w+)/i);
 			if (match) {
 				const parentClass = match[1].toLowerCase();
-				const className = path.basename(filename).split(".")[0];
-				this.addClass(className, parentClass, description, filename);
+				const className = path.basename(fileName).split(".")[0];
+				this.addClass(className, parentClass, description, fileName);
 				break;
 			}
 
@@ -120,8 +124,8 @@ export class ClassesCollector {
 						classLine.includes(`class ${cls.toLowerCase()}`),
 					) || classLine.includes("class object");
 				if (matchesInbuilt) {
-					const className = path.basename(filename).split(".")[0];
-					this.addClass(className, "", description, filename);
+					const className = path.basename(fileName).split(".")[0];
+					this.addClass(className, "", description, fileName);
 					break;
 				}
 			}
