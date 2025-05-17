@@ -17,10 +17,9 @@ export interface VariableBase extends SymbolEntity {
 	declaration(): string;
 }
 
-export interface SerializableClass extends SymbolEntity {
+export interface SerializableClass {
 	name: string;
 	parentClassName: string;
 	description: string;
 	fileName: string;
-	setCollectorReference(collector: ClassesCollector): void;
 }

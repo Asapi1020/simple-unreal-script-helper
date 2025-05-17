@@ -73,8 +73,8 @@ class GoToDefinitionHelper {
 			return null;
 		}
 
-		if (leftLine === "" || leftLine.endsWith("self.")) {
-			switch (word) {
+		if (leftLine === "") {
+			switch (word.toLowerCase()) {
 				case "super": {
 					const parentClass = this.unrealData
 						.getClassFromFileName(activeFile)
@@ -99,6 +99,19 @@ class GoToDefinitionHelper {
 				default:
 					return this.getAndOpenObject(word, this.unrealData);
 			}
+		}
+
+		if (leftLine.toLowerCase().endsWith("self.")) {
+			const thisClass = this.unrealData.getClassFromFileName(activeFile);
+			if (!thisClass) {
+				console.warn("active class is null");
+				return null;
+			}
+			console.debug("thisClass: ", thisClass.getName());
+			const objectDef = this.getAndOpenObject(word, thisClass, {
+				hasNoClasses: true,
+			});
+			return objectDef;
 		}
 
 		if (leftLine.endsWith(".")) {

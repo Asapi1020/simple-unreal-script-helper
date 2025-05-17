@@ -128,10 +128,6 @@ export class ClassReference {
 	}
 
 	public getFunction(name: string): UnrealFunction | null {
-		if (!this.bWasParsed) {
-			this.parseMe();
-			return null;
-		}
 		for (const func of this.functions) {
 			if (name.toLowerCase() === func.getName().toLowerCase()) {
 				return func;
@@ -146,9 +142,6 @@ export class ClassReference {
 	}
 
 	public getVariable(name: string): UnrealVariable | null {
-		if (!this.bWasParsed) {
-			this.parseMe();
-		}
 		for (const variable of this.variables) {
 			if (name.toLowerCase() === variable?.getName().toLowerCase()) {
 				return variable;

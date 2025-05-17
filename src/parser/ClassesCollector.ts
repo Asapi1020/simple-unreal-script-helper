@@ -223,24 +223,18 @@ export class ClassesCollector {
 	private async saveClassesToCache(): Promise<void> {
 		if (this.srcFolder) {
 			const filePath = path.join(this.srcFolder, "classes_cache.json");
-			const json = JSON.stringify(
-				this.classes,
-				ClassesCollector.removeCircularReferences(),
-				2,
-			);
+			console.debug("Saving Classes: ", this.classes.length);
+			const rawClasses: SerializableClass[] = this.classes.map((classRef) => {
+				return {
+					name: classRef.getName(),
+					parentClassName: classRef.getParentClass(),
+					description: classRef.getDescription(),
+					fileName: classRef.getFileName(),
+				};
+			});
+			const json = JSON.stringify(rawClasses, null, 2);
 			fs.writeFileSync(filePath, json, "utf-8");
 			console.log("Classes saved to cache.", filePath);
 		}
-	}
-
-	private static removeCircularReferences() {
-		const seen = new WeakSet();
-		return (_key: string, value: unknown) => {
-			if (typeof value === "object" && value !== null) {
-				if (seen.has(value)) return undefined;
-				seen.add(value);
-			}
-			return value;
-		};
 	}
 }

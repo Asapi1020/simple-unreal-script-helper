@@ -93,7 +93,7 @@ export class UnrealData {
 		data: UnrealData,
 		options: GetObjectOptions,
 	): SymbolEntity | null {
-		console.debug("getObjectFromData", word, options);
+		console.debug(`get object '${word}' from data with`, options);
 		if (!options.hasNoClasses) {
 			const classReference = data.getClass(word);
 			if (classReference) {
@@ -123,7 +123,10 @@ export class UnrealData {
 		fromClass: ClassReference,
 		options: GetObjectOptions,
 	): SymbolEntity | null {
-		console.debug("getObjectFromClass", word, fromClass.getName(), options);
+		console.debug(
+			`get object '${word}' from class'${fromClass.getName()}' with`,
+			options,
+		);
 		if (!options.hasNoFunctions) {
 			const functionReference = fromClass.getFunction(word);
 			if (functionReference) {
@@ -138,8 +141,9 @@ export class UnrealData {
 		}
 		if (!fromClass.hasParsed()) {
 			console.log(
-				`class ${fromClass.getName()} not parsed yet, parse class now...`,
+				`class'${fromClass.getName()}' not parsed yet, parse class now...`,
 			);
+			fromClass.parseMe();
 		}
 		return null;
 	}
@@ -148,7 +152,7 @@ export class UnrealData {
 		word: string,
 		fromStruct: UnrealStruct,
 	): UnrealVariable | null {
-		console.debug("getVariableFromStruct", word, fromStruct.getName());
+		console.debug(`get variable '${word}' from struct ${fromStruct.getName()}`);
 		const variable = fromStruct.getVariable(word);
 		return variable ?? null;
 	}
