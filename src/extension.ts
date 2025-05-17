@@ -7,12 +7,12 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.window.showInformationMessage(
 		"Simple UnrealScript Extension is now active!",
 	);
-
-	const unrealData = new UnrealData(context);
+	const unrealData = new UnrealData();
 	const plugin = new UnrealPlugin(context, unrealData);
 	context.subscriptions.push(plugin.onPostSave());
 	context.subscriptions.push(plugin.onActivated());
 	context.subscriptions.push(plugin.onCompletion());
+	context.subscriptions.push(plugin.onGoToDefinition());
 }
 
 export function deactivate() {}

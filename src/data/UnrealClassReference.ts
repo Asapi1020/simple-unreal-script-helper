@@ -121,12 +121,15 @@ export class ClassReference {
 	}
 
 	public getFunction(name: string): UnrealFunction | null {
+		if (!this.bWasParsed) {
+			this.parseMe();
+			return null;
+		}
 		for (const func of this.functions) {
 			if (name.toLowerCase() === func.getName().toLowerCase()) {
 				return func;
 			}
 		}
-
 		const parentClass = this.collectorReference.getClass(this.parentClassName);
 		return parentClass?.getFunction(name) ?? null;
 	}
@@ -136,6 +139,9 @@ export class ClassReference {
 	}
 
 	public getVariable(name: string): UnrealVariable | null {
+		if (!this.bWasParsed) {
+			this.parseMe();
+		}
 		for (const variable of this.variables) {
 			if (name.toLowerCase() === variable?.getName().toLowerCase()) {
 				return variable;

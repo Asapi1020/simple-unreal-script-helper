@@ -3,6 +3,7 @@ import type {
 	GetAutoCompleteListOptions,
 	UnrealData,
 } from "../data/UnrealData";
+import { UnrealVariable } from "../data/UnrealVariable";
 
 export class UnrealCompletionProvider implements vscode.CompletionItemProvider {
 	constructor(private unrealData: UnrealData) {}
@@ -39,7 +40,8 @@ export class UnrealCompletionProvider implements vscode.CompletionItemProvider {
 			return defaultPropertiesCompletions;
 		}
 
-		const split = line.text.trim().split(/\s+/);
+		const trimmedLine = line.text.trim();
+		const split = trimmedLine.split(/\s+/);
 		const firstWord = split[0]?.toLowerCase();
 		const isVarDecl =
 			["var", "local", "param"].includes(firstWord) ||
@@ -47,9 +49,8 @@ export class UnrealCompletionProvider implements vscode.CompletionItemProvider {
 		if (isVarDecl) {
 			const secondWord = split[1]?.toLowerCase();
 			const isNotArray = !secondWord?.includes("array");
-
-			const lastChar = line.text.trim().slice(-1);
-			const isTriggerChar = lastChar === "<" || lastChar === "|";
+			const isTriggerChar =
+				trimmedLine.endsWith("<") || trimmedLine.endsWith("|");
 
 			if (split.length > 1 && isNotArray && isTriggerChar) {
 				return this.getMetadataTagCompletions();

@@ -46,8 +46,6 @@ export class UnrealData {
 	private inbuiltFunctions: UnrealFunction[] = [];
 	private inbuiltVariables: VariableBase[] = [];
 
-	constructor(private context: vscode.ExtensionContext) {}
-
 	public linkClasses(): void {
 		for (const classReference of this.classes) {
 			classReference.linkToParent();
@@ -59,7 +57,7 @@ export class UnrealData {
 		data: SymbolEntity | UnrealData,
 		options: GetObjectOptions,
 	): ObjectData | null {
-		const outOf = data ?? this;
+		const outOf = data;
 		const [num, keyWord] = word.trim().endsWith("]")
 			? [(word.match(/\[/g) || []).length, word.split("[")[0]]
 			: [0, word];
@@ -84,6 +82,9 @@ export class UnrealData {
 			(outOf instanceof UnrealData || outOf instanceof ClassReference)
 		) {
 			const functionReference = outOf.getFunction(keyWord);
+			console.debug(
+				`getObject: ${keyWord} ${functionReference?.getName() ?? "null"}`,
+			);
 			if (functionReference) {
 				return {
 					entity: functionReference,
@@ -133,8 +134,8 @@ export class UnrealData {
 		localVariables: UnrealVariable[] = [],
 	): ClassReference | null {
 		const objects = line.slice(0, -1).split(".");
-		console.log(line);
-		console.log(objects, fromClass?.getName() ?? "");
+		console.debug("getClassFrom: ", line);
+		console.debug(objects, fromClass?.getName() ?? "");
 
 		if (objects.length === 1) {
 			if (line.endsWith("self.")) {
@@ -175,15 +176,21 @@ export class UnrealData {
 			}
 
 			const objectWord = line.slice(0, -1);
-			const object = this.getObject(objectWord, fromClass ?? this, {
-				hasNoClasses: true,
-				isSecondType: true,
-				localVariables: fromClass ? undefined : localVariables,
-			});
+			const object =
+				this.getObject(objectWord, fromClass ?? this, {
+					hasNoClasses: true,
+					isSecondType: true,
+					localVariables: fromClass ? undefined : localVariables,
+				}) ??
+				this.getObject(objectWord, fromClass ?? this, {
+					isSecondType: true,
+					localVariables: fromClass ? undefined : localVariables,
+				});
 			if (!object) {
 				return null;
 			}
 			const type = this.getObjectType(object, fromClass);
+			console.debug("type", type);
 			if (!type || type instanceof ClassReference) {
 				return type;
 			}

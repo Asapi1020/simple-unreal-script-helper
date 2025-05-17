@@ -43,7 +43,11 @@ export class ClassesCollector {
 	}
 
 	public getClass(className: string): ClassReference | null {
-		return this.classes.find((c) => c.getName() === className) ?? null;
+		return (
+			this.classes.find(
+				(c) => c.getName().toLowerCase() === className.toLowerCase(),
+			) ?? null
+		);
 	}
 
 	public addClass(
@@ -136,7 +140,7 @@ export class ClassesCollector {
 
 	private async cacheExists(folder: string): Promise<boolean> {
 		const cachePath = `${folder}\\classes_cache.json`;
-		console.debug("Checking cache path:", cachePath);
+		console.log("Checking cache path:", cachePath);
 		return fs.promises
 			.access(cachePath)
 			.then(() => true)
@@ -217,7 +221,7 @@ export class ClassesCollector {
 				2,
 			);
 			fs.writeFileSync(filePath, json, "utf-8");
-			console.debug("Classes saved to cache.", filePath);
+			console.log("Classes saved to cache.", filePath);
 		}
 	}
 

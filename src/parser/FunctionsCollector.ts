@@ -1,7 +1,6 @@
 import { createReadStream, promises, readFileSync } from "node:fs";
 import path from "node:path";
 import { createInterface } from "node:readline";
-import type * as vscode from "vscode";
 import type { ClassReference } from "../data/UnrealClassReference";
 import { UnrealConst } from "../data/UnrealConst";
 import { UnrealFunction } from "../data/UnrealFunction";
@@ -346,7 +345,7 @@ export class FunctionsCollector {
 
 							const remaining = splitLeftLine.slice(i).join(" ");
 							if (remaining.includes("(") && remaining.includes(")")) {
-								console.log(
+								console.warn(
 									"Failed to parse this function/event:\n",
 									line,
 									"(it probably should fail. If you see a line that fails that shouldn't, contact me)",
@@ -420,7 +419,7 @@ export class FunctionsCollector {
 				) {
 					currentDocumentation = "";
 				} else {
-					console.log(
+					console.warn(
 						"Failed to parse const:\n",
 						line,
 						"(it probably should fail. If you see a line that fails that shouldn't, contact me)",
