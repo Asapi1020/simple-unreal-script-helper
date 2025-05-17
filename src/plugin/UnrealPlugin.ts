@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
-import type { ClassReference } from "../data/UnrealClassReference";
-import type { GetObjectOptions, UnrealData } from "../data/UnrealData";
+import type { UnrealData } from "../data/UnrealData";
 import { ClassesCollector } from "../parser/ClassesCollector";
 import { FunctionsCollector } from "../parser/FunctionsCollector";
 import { UnrealCompletionProvider } from "../parser/UnrealCompletionProvider";
@@ -20,6 +19,7 @@ export class UnrealPlugin {
 	private isStillParsingClasses = true;
 	private isWantedToGoToDefinition = false;
 	private isWantedToAutocomplete = false;
+	private collector = new ClassesCollector();
 
 	private eventManager: EventManager | null = null;
 	private fileNames: string[] = [];
@@ -107,8 +107,7 @@ export class UnrealPlugin {
 			const folders = vscode.workspace.workspaceFolders?.map(
 				(folder) => folder.uri.fsPath,
 			);
-			const collector = new ClassesCollector("", folders ?? [], true);
-			this.handleClassesCollector(editor, collector);
+			this.handleClassesCollector(editor, "", folders ?? [], true);
 			return;
 		}
 
@@ -119,6 +118,7 @@ export class UnrealPlugin {
 			!this.fileNames.includes(fileName)
 		) {
 			console.log("start parsing file:", fileName);
+			this.handleClassesCollector(editor, fileName, [], false);
 			this.fileNames.push(fileName);
 			this.handleFunctionsCollector(fileName);
 			return;
@@ -130,15 +130,22 @@ export class UnrealPlugin {
 
 	private async handleClassesCollector(
 		editor: vscode.TextEditor,
-		collector: ClassesCollector,
+		fileName: string,
+		openFolderArr: string[],
+		loadSource: boolean,
 	): Promise<void> {
-		await collector.start(this.context);
-		this.unrealData.addClasses(collector.returnClasses());
+		await this.collector.start(
+			this.context,
+			fileName,
+			openFolderArr,
+			loadSource,
+		);
+		this.unrealData.addClasses(this.collector.returnClasses());
 		this.handleCollector(editor);
 	}
 
 	private async handleFunctionsCollector(fileName: string): Promise<void> {
-		const collector = new FunctionsCollector(fileName);
+		const collector = new FunctionsCollector(fileName, this.collector);
 		await collector.start();
 		const properties = collector.returnProperties();
 		this.unrealData.addFunctions(properties.functions);

@@ -87,6 +87,13 @@ export class ClassReference {
 		return this.parentClass;
 	}
 
+	public safeLoadParent(): ClassReference | null {
+		if (!this.parentClass) {
+			this.linkToParent();
+		}
+		return this.parentClass;
+	}
+
 	public getParentClass(): string {
 		return this.parentClassName;
 	}
@@ -167,7 +174,10 @@ export class ClassReference {
 	}
 
 	public async parseMe(): Promise<void> {
-		const collector = new FunctionsCollector(this.fileName);
+		const collector = new FunctionsCollector(
+			this.fileName,
+			this.collectorReference,
+		);
 		await collector.start();
 		const properties = collector.returnProperties();
 		this.functions = properties.functions;

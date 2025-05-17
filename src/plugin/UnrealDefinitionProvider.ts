@@ -47,21 +47,28 @@ class GoToDefinitionHelper {
 			`resolveTarget - leftLine: ${leftLine}, word: ${word}, fullLine: ${fullLine}`,
 		);
 		if (
-			fullLine.includes("function") ||
-			fullLine.includes("event") ||
-			leftLine.endsWith("super.")
+			fullLine.toLowerCase().includes("function") ||
+			fullLine.toLowerCase().includes("event") ||
+			leftLine.toLowerCase().endsWith("super.")
 		) {
-			const success = this.getAndOpenObject(word, this.unrealData, {
+			const classDef = this.getAndOpenObject(word, this.unrealData, {
 				hasNoFunctions: true,
 				hasNoVariables: true,
 			});
-			if (success) return success;
+			if (classDef) {
+				return classDef;
+			}
 
-			const parentClass = this.unrealData
-				.getClassFromFileName(activeFile)
-				?.getParent();
-			if (parentClass) {
-				return this.getAndOpenObject(word, parentClass, { hasNoClasses: true });
+			const thisClass = this.unrealData.getClassFromFileName(activeFile);
+			let parentClass = thisClass?.safeLoadParent();
+			while (parentClass) {
+				const parentsObjectDef = this.getAndOpenObject(word, parentClass, {
+					hasNoClasses: true,
+				});
+				if (parentsObjectDef) {
+					return parentsObjectDef;
+				}
+				parentClass = parentClass.safeLoadParent();
 			}
 			return null;
 		}
@@ -71,7 +78,7 @@ class GoToDefinitionHelper {
 				case "super": {
 					const parentClass = this.unrealData
 						.getClassFromFileName(activeFile)
-						?.getParent();
+						?.safeLoadParent();
 					if (parentClass) {
 						return this.getAndOpenObject(
 							parentClass.getName(),
@@ -114,18 +121,15 @@ class GoToDefinitionHelper {
 		outOf: ClassReference | UnrealData,
 		options: GetObjectOptions = {},
 	): DefinitionTarget | null {
-		const window = vscode.window;
-		console.debug("getAndOpenObject", word, outOf, options);
 		const object = this.unrealData.getObject(word, outOf, options);
 
 		if (object) {
 			return {
-				file: object.entity.getFileName(),
-				line: object.entity.getLineNumber(),
+				file: object.getFileName(),
+				line: object.getLineNumber(),
 				character: 0,
 			};
 		}
-		window.setStatusBarMessage("Just a moment...");
 		return null;
 	}
 }

@@ -4,21 +4,23 @@ import path from "node:path";
 import * as vscode from "vscode";
 import type { SerializableClass } from "../data/SymbolEntity";
 import { ClassReference } from "../data/UnrealClassReference";
+import { FunctionsCollector } from "./FunctionsCollector";
 
 export class ClassesCollector {
 	public activeThreads: Promise<void>[] = [];
 	private classes: ClassReference[] = [];
 	private srcFolder = "";
+	private fileName = "";
 
-	constructor(
-		private fileName: string,
-		private openFolderArr: string[],
-		private isFirst: boolean,
-	) {}
-
-	public async start(context: vscode.ExtensionContext): Promise<void> {
-		if (this.isFirst) {
-			for (const folder of this.openFolderArr) {
+	public async start(
+		context: vscode.ExtensionContext,
+		fileName: string,
+		openFolderArr: string[],
+		loadSource: boolean,
+	): Promise<void> {
+		this.fileName = fileName;
+		if (loadSource) {
+			for (const folder of openFolderArr) {
 				if (folder.includes("Development\\Src")) {
 					console.log("src folder found:", folder);
 					this.srcFolder = folder;
@@ -73,6 +75,10 @@ export class ClassesCollector {
 		return this.classes;
 	}
 
+	public setFile(fileName: string): void {
+		this.fileName = fileName;
+	}
+
 	private async getClasses(filePath: string): Promise<void> {
 		const entries = await fs.promises.readdir(filePath, {
 			withFileTypes: true,
@@ -108,7 +114,8 @@ export class ClassesCollector {
 	private async saveClasses(fileName: string): Promise<void> {
 		let description = "";
 		const inbuiltClasses = ["Array", "Class", "HiddenFunctions"];
-		const lines = (await readFile(fileName, "utf-8")).split(/\r?\n/);
+		const encoding = await FunctionsCollector.detectEncoding(fileName);
+		const lines = (await readFile(fileName, encoding)).split(/\r?\n/);
 
 		for (const line of lines) {
 			description += `${line}\n`;
@@ -152,7 +159,8 @@ export class ClassesCollector {
 		try {
 			await fs.promises.access(path);
 
-			const json = await fs.promises.readFile(path, "utf-8");
+			const encoding = await FunctionsCollector.detectEncoding(path);
+			const json = await fs.promises.readFile(path, encoding);
 			const rawClasses: SerializableClass[] = JSON.parse(json);
 
 			this.classes = rawClasses.map((raw) => {

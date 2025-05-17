@@ -6,7 +6,7 @@ import { UnrealConst } from "../data/UnrealConst";
 import { UnrealFunction } from "../data/UnrealFunction";
 import { UnrealStruct } from "../data/UnrealStruct";
 import { UnrealVariable } from "../data/UnrealVariable";
-import { ClassesCollector } from "./ClassesCollector";
+import type { ClassesCollector } from "./ClassesCollector";
 
 export class FunctionsCollector {
 	private functions: UnrealFunction[] = [];
@@ -14,11 +14,11 @@ export class FunctionsCollector {
 	private consts: UnrealConst[] = [];
 	private structs: UnrealStruct[] = [];
 	private structVariables: UnrealVariable[] = [];
-	private classesCollector: ClassesCollector;
 
-	constructor(private fileName: string) {
-		this.classesCollector = new ClassesCollector(fileName, [], false);
-	}
+	constructor(
+		private fileName: string,
+		private classesCollector: ClassesCollector,
+	) {}
 
 	public async start(): Promise<void> {
 		if (this.fileName) {
@@ -38,7 +38,10 @@ export class FunctionsCollector {
 				? this.getFileName(parentClassName)
 				: null;
 			if (parentFileName) {
-				const parentFunctionsCollector = new FunctionsCollector(parentFileName);
+				const parentFunctionsCollector = new FunctionsCollector(
+					parentFileName,
+					this.classesCollector,
+				);
 				await parentFunctionsCollector.start();
 				const parentProperties = parentFunctionsCollector.returnProperties();
 				this.functions = [...this.functions, ...parentProperties.functions];
@@ -132,7 +135,7 @@ export class FunctionsCollector {
 					returnType.trim(),
 					functionName.trim(),
 					args.trim(),
-					lineNumber + 1,
+					lineNumber,
 					fileName,
 					description,
 					isFunction,
@@ -154,7 +157,7 @@ export class FunctionsCollector {
 			varModifiers,
 			varName.trim(),
 			comment,
-			lineNumber + 1,
+			lineNumber,
 			fileName,
 			description,
 		);
@@ -181,7 +184,7 @@ export class FunctionsCollector {
 				description,
 				comment,
 				fileName,
-				lineNumber + 1,
+				lineNumber,
 			),
 		);
 	}
