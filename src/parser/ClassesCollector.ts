@@ -6,42 +6,47 @@ import type { SerializableClass } from "../data/SymbolEntity";
 import { ClassReference } from "../data/UnrealClassReference";
 import { FunctionsCollector } from "./FunctionsCollector";
 
+export interface CollectorOptions {
+	fileName?: string;
+	extensionPath?: string;
+	openFolderArr?: string[];
+}
+
 export class ClassesCollector {
 	public activeThreads: Promise<void>[] = [];
 	private classes: ClassReference[] = [];
 	private srcFolder = "";
-	private fileName = "";
 
-	public async start(
-		context: vscode.ExtensionContext,
-		fileName: string,
-		openFolderArr: string[],
-		loadSource: boolean,
-	): Promise<void> {
-		this.fileName = fileName;
-		if (loadSource) {
-			for (const folder of openFolderArr) {
+	public async start(options: CollectorOptions): Promise<void> {
+		if (options.openFolderArr) {
+			for (const folder of options.openFolderArr) {
 				if (folder.includes("Development\\Src")) {
-					console.log("src folder found:", folder);
 					this.srcFolder = folder;
+					console.log("src folder found:", folder);
 					if (await this.cacheExists(folder)) {
 						console.log("cache exists. Loading...");
 						await this.loadClassesFromCache();
 					} else {
 						console.log("no cache. parsing...");
 						await this.getClasses(folder);
-						await this.getInbuiltClasses(context);
+						if (options.extensionPath) {
+							await this.getInbuiltClasses(options.extensionPath);
+						} else {
+							console.warn(
+								"Extension path not provided. Skipping inbuilt classes.",
+							);
+						}
 					}
-					break;
+				} else {
+					console.log("dev folder found:", folder);
+					await this.getClasses(folder);
 				}
+				await this.handleThreads();
 			}
-		} else {
-			if (this.fileName) {
-				await this.saveClasses(this.fileName);
-			}
+		} else if (options.fileName) {
+			await this.saveClasses(options.fileName);
+			await this.handleThreads();
 		}
-
-		await this.handleThreads();
 	}
 
 	public getClass(className: string): ClassReference | null {
@@ -75,10 +80,6 @@ export class ClassesCollector {
 		return this.classes;
 	}
 
-	public setFile(fileName: string): void {
-		this.fileName = fileName;
-	}
-
 	private async getClasses(filePath: string): Promise<void> {
 		const entries = await fs.promises.readdir(filePath, {
 			withFileTypes: true,
@@ -95,13 +96,11 @@ export class ClassesCollector {
 		}
 	}
 
-	private async getInbuiltClasses(
-		context: vscode.ExtensionContext,
-	): Promise<void> {
+	private async getInbuiltClasses(extensionPath: string): Promise<void> {
 		const inbuilt = ["Array", "Class", "HiddenFunctions"];
 		for (const name of inbuilt) {
 			const filePath = path.join(
-				context.extensionPath,
+				extensionPath,
 				"src",
 				"in-built-classes",
 				`${name}.uc`,
@@ -162,8 +161,7 @@ export class ClassesCollector {
 			const encoding = await FunctionsCollector.detectEncoding(path);
 			const json = await fs.promises.readFile(path, encoding);
 			const rawClasses: SerializableClass[] = JSON.parse(json);
-
-			this.classes = rawClasses.map((raw) => {
+			const cacheClasses = rawClasses.map((raw) => {
 				const c = new ClassReference(
 					raw.name,
 					raw.parentClassName,
@@ -174,6 +172,7 @@ export class ClassesCollector {
 				c.setCollectorReference(this);
 				return c;
 			});
+			this.classes.push(...cacheClasses);
 
 			console.log("Classes loaded from cache.");
 		} catch (err) {

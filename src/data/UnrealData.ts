@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import type { ClassesCollector } from "../parser/ClassesCollector";
 import type { SymbolEntity, VariableBase } from "./SymbolEntity";
 import { ClassReference } from "./UnrealClassReference";
 import { UnrealFunction } from "./UnrealFunction";
@@ -37,8 +38,6 @@ export class UnrealData {
 	private fileNames: string[] = [];
 	private functions: UnrealFunction[] = [];
 	private variables: VariableBase[] = [];
-
-	private completionClass: ClassReference | null = null;
 
 	private inbuiltFunctions: UnrealFunction[] = [];
 	private inbuiltVariables: VariableBase[] = [];
@@ -202,25 +201,20 @@ export class UnrealData {
 			}
 
 			const objectWord = line.slice(0, -1);
-			const object =
-				this.getObject(objectWord, fromClass ?? this, {
-					hasNoClasses: true,
-					isSecondType: true,
-					localVariables: fromClass ? undefined : localVariables,
-				}) ??
-				this.getObject(objectWord, fromClass ?? this, {
-					isSecondType: true,
-					localVariables: fromClass ? undefined : localVariables,
-				});
+			const object = this.getObject(objectWord, fromClass ?? this, {
+				hasNoClasses: true,
+				isSecondType: true,
+				localVariables: fromClass ? undefined : localVariables,
+			});
 			if (!object) {
 				return null;
 			}
-			const type = this.getObjectType(object, fromClass);
-			if (!type || type instanceof ClassReference) {
-				return type;
+			const objectType = this.getObjectType(object, fromClass);
+			if (!objectType || objectType instanceof ClassReference) {
+				return objectType;
 			}
 			return this.getClassFromContext(
-				`${type.getName()}.`,
+				`${objectType.getName()}.`,
 				fromClass,
 				localVariables,
 			);
@@ -342,7 +336,6 @@ export class UnrealData {
 			if (isParsing) {
 				return ["parsing..."];
 			}
-			this.completionClass = options.fromClass;
 			return this.filterRelevantItems(functions, variables, options);
 		}
 		if (this.inbuiltFunctions.length === 0) {
@@ -522,10 +515,6 @@ export class UnrealData {
 			this.functions = completion.functions;
 			this.variables = completion.variables;
 		}
-	}
-
-	public clearCompletionClass(): void {
-		this.completionClass = null;
 	}
 
 	public addClasses(classes: ClassReference[]): void {

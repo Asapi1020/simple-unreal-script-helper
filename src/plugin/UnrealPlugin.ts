@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import type { UnrealData } from "../data/UnrealData";
-import { ClassesCollector } from "../parser/ClassesCollector";
+import type { ClassesCollector } from "../parser/ClassesCollector";
 import { FunctionsCollector } from "../parser/FunctionsCollector";
 import { UnrealCompletionProvider } from "../parser/UnrealCompletionProvider";
 import { EventManager } from "./EventManager";
@@ -19,13 +19,13 @@ export class UnrealPlugin {
 	private isStillParsingClasses = true;
 	private isWantedToGoToDefinition = false;
 	private isWantedToAutocomplete = false;
-	private collector = new ClassesCollector();
 
 	private eventManager: EventManager | null = null;
 	private fileNames: string[] = [];
 
 	constructor(
 		private context: vscode.ExtensionContext,
+		private collector: ClassesCollector,
 		unrealData: UnrealData,
 	) {
 		this.unrealData = unrealData;
@@ -83,7 +83,6 @@ export class UnrealPlugin {
 			return;
 		}
 
-		this.unrealData.clearCompletionClass();
 		this.isBuiltForCurrentFile = true;
 
 		if (this.isFirstTime) {
@@ -107,7 +106,7 @@ export class UnrealPlugin {
 			const folders = vscode.workspace.workspaceFolders?.map(
 				(folder) => folder.uri.fsPath,
 			);
-			this.handleClassesCollector(editor, "", folders ?? [], true);
+			this.handleClassesCollector(editor, "", folders);
 			return;
 		}
 
@@ -118,7 +117,7 @@ export class UnrealPlugin {
 			!this.fileNames.includes(fileName)
 		) {
 			console.log("start parsing file:", fileName);
-			this.handleClassesCollector(editor, fileName, [], false);
+			this.handleClassesCollector(editor, fileName, []);
 			this.fileNames.push(fileName);
 			this.handleFunctionsCollector(fileName);
 			return;
@@ -130,16 +129,14 @@ export class UnrealPlugin {
 
 	private async handleClassesCollector(
 		editor: vscode.TextEditor,
-		fileName: string,
-		openFolderArr: string[],
-		loadSource: boolean,
+		fileName?: string,
+		openFolderArr?: string[],
 	): Promise<void> {
-		await this.collector.start(
-			this.context,
+		await this.collector.start({
+			extensionPath: this.context.extensionPath,
 			fileName,
 			openFolderArr,
-			loadSource,
-		);
+		});
 		this.unrealData.addClasses(this.collector.returnClasses());
 		this.handleCollector(editor);
 	}

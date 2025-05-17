@@ -46,12 +46,19 @@ class GoToDefinitionHelper {
 		console.debug(
 			`resolveTarget - leftLine: ${leftLine}, word: ${word}, fullLine: ${fullLine}`,
 		);
+
+		const thisClass = this.unrealData.getClassFromFileName(activeFile);
+		if (!thisClass) {
+			console.warn("active class is null", activeFile);
+			return null;
+		}
+
 		if (
 			fullLine.toLowerCase().includes("function") ||
 			fullLine.toLowerCase().includes("event") ||
 			leftLine.toLowerCase().endsWith("super.")
 		) {
-			const classDef = this.getAndOpenObject(word, this.unrealData, {
+			const classDef = this.getObjectDef(word, this.unrealData, {
 				hasNoFunctions: true,
 				hasNoVariables: true,
 			});
@@ -59,10 +66,9 @@ class GoToDefinitionHelper {
 				return classDef;
 			}
 
-			const thisClass = this.unrealData.getClassFromFileName(activeFile);
-			let parentClass = thisClass?.safeLoadParent();
+			let parentClass = thisClass.safeLoadParent();
 			while (parentClass) {
-				const parentsObjectDef = this.getAndOpenObject(word, parentClass, {
+				const parentsObjectDef = this.getObjectDef(word, parentClass, {
 					hasNoClasses: true,
 				});
 				if (parentsObjectDef) {
@@ -76,60 +82,49 @@ class GoToDefinitionHelper {
 		if (leftLine === "") {
 			switch (word.toLowerCase()) {
 				case "super": {
-					const parentClass = this.unrealData
-						.getClassFromFileName(activeFile)
-						?.safeLoadParent();
+					const parentClass = thisClass.safeLoadParent();
 					if (parentClass) {
-						return this.getAndOpenObject(
-							parentClass.getName(),
-							this.unrealData,
-						);
+						return this.getObjectDef(parentClass.getName(), this.unrealData);
 					}
 					break;
 				}
 				case "self": {
-					const className = this.unrealData
-						.getClassFromFileName(activeFile)
-						?.getName();
+					const className = thisClass.getName();
 					if (className) {
-						return this.getAndOpenObject(className, this.unrealData);
+						return this.getObjectDef(className, this.unrealData);
 					}
 					break;
 				}
 				default:
-					return this.getAndOpenObject(word, this.unrealData);
+					return this.getObjectDef(word, this.unrealData);
 			}
 		}
 
 		if (leftLine.toLowerCase().endsWith("self.")) {
-			const thisClass = this.unrealData.getClassFromFileName(activeFile);
-			if (!thisClass) {
-				console.warn("active class is null");
-				return null;
-			}
-			console.debug("thisClass: ", thisClass.getName());
-			const objectDef = this.getAndOpenObject(word, thisClass, {
+			const objectDef = this.getObjectDef(word, thisClass, {
 				hasNoClasses: true,
 			});
 			return objectDef;
 		}
 
 		if (leftLine.endsWith(".")) {
-			const contextClass = this.unrealData.getClassFromContext(leftLine);
-			console.debug("contextClass: ", contextClass?.getName());
+			const contextClass = this.unrealData.getClassFromContext(
+				leftLine,
+				thisClass,
+			);
 			if (contextClass) {
-				return this.getAndOpenObject(word, contextClass, {
+				return this.getObjectDef(word, contextClass, {
 					hasNoClasses: true,
 				});
 			}
 			return null;
 		}
 
-		console.debug("case not handled!!!", leftLine);
+		console.debug("case not handled for: ", leftLine);
 		return null;
 	}
 
-	private getAndOpenObject(
+	private getObjectDef(
 		word: string,
 		outOf: ClassReference | UnrealData,
 		options: GetObjectOptions = {},
