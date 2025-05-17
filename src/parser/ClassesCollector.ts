@@ -69,11 +69,13 @@ export class ClassesCollector {
 		return this.classes;
 	}
 
-	private async getClasses(path: string): Promise<void> {
-		const entries = await fs.promises.readdir(path, { withFileTypes: true });
+	private async getClasses(filePath: string): Promise<void> {
+		const entries = await fs.promises.readdir(filePath, {
+			withFileTypes: true,
+		});
 
 		for (const entry of entries) {
-			const fullPath = `${path}/${entry.name}`;
+			const fullPath = path.join(filePath, entry.name);
 			if (entry.isFile() && entry.name.endsWith(".uc")) {
 				const thread = this.saveClasses(fullPath);
 				this.activeThreads.push(thread);
