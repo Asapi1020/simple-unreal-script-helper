@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import type { ClassesCollector } from "../parser/ClassesCollector";
+import { extractUnclosedBracketContent } from "../parser/parser";
 import type { SymbolEntity, VariableBase } from "./SymbolEntity";
 import { ClassReference } from "./UnrealClassReference";
 import { UnrealFunction } from "./UnrealFunction";
@@ -32,8 +33,6 @@ export interface Completion {
 	isParsing?: boolean;
 }
 
-export type ObjectData = { entity: SymbolEntity; num?: number };
-
 export class UnrealData {
 	private classes: ClassReference[] = [];
 	private completionsForFile: Completion[] = [];
@@ -41,12 +40,8 @@ export class UnrealData {
 	private functions: UnrealFunction[] = [];
 	private variables: VariableBase[] = [];
 
-	private completionClass: ClassReference | null = null;
-
 	private inbuiltFunctions: UnrealFunction[] = [];
 	private inbuiltVariables: VariableBase[] = [];
-
-	constructor(private context: vscode.ExtensionContext) {}
 
 	public linkClasses(): void {
 		for (const classReference of this.classes) {
@@ -56,75 +51,111 @@ export class UnrealData {
 
 	public getObject(
 		word: string,
-		data: SymbolEntity | UnrealData,
+		outOf: SymbolEntity | UnrealData,
 		options: GetObjectOptions,
-	): ObjectData | null {
-		const outOf = data ?? this;
-		const [num, keyWord] = word.trim().endsWith("]")
-			? [(word.match(/\[/g) || []).length, word.split("[")[0]]
-			: [0, word];
+	): SymbolEntity | null {
+		const isArray = word.trim().endsWith("]");
+		const keyWord = isArray ? word.split("[")[0] : word;
 
 		if (outOf instanceof UnrealStruct) {
-			const variable = outOf.getVariable(keyWord);
-			return variable ? { entity: variable } : null;
+			return this.getVariableFromStruct(keyWord, outOf);
 		}
 
-		if (!options.hasNoClasses && outOf instanceof UnrealData) {
-			const classReference = outOf.getClass(keyWord);
-			if (classReference) {
-				return {
-					entity: classReference,
-					num: options.isSecondType ? num : undefined,
-				};
+		if (outOf instanceof UnrealData) {
+			const object = this.getObjectFromData(keyWord, outOf, options);
+			if (object) {
+				return object;
 			}
 		}
 
-		if (
-			!options.hasNoFunctions &&
-			(outOf instanceof UnrealData || outOf instanceof ClassReference)
-		) {
-			const functionReference = outOf.getFunction(keyWord);
-			if (functionReference) {
-				return {
-					entity: functionReference,
-					num: options.isSecondType ? num : undefined,
-				};
-			}
-		}
-
-		if (
-			!options.hasNoVariables &&
-			(outOf instanceof UnrealData || outOf instanceof ClassReference)
-		) {
-			const variableReference = outOf.getVariable(keyWord);
-			if (variableReference) {
-				return {
-					entity: variableReference,
-					num: options.isSecondType ? num : undefined,
-				};
+		if (outOf instanceof ClassReference) {
+			const object = this.getObjectFromClass(keyWord, outOf, options);
+			if (object) {
+				return object;
 			}
 		}
 
 		if (options.localVariables && options.localVariables.length > 0) {
-			const local = options.localVariables.filter(
+			const local = options.localVariables.find(
 				(variable) =>
 					variable.getName().toLowerCase() === keyWord.toLowerCase(),
 			);
-			if (local.length > 0) {
-				return {
-					entity: local[0],
-					num: options.isSecondType ? num : undefined,
-				};
+			if (local) {
+				return local;
 			}
 		}
 
-		if (outOf instanceof ClassReference && outOf.hasParsed()) {
+		return null;
+	}
+
+	public getObjectFromData(
+		word: string,
+		data: UnrealData,
+		options: GetObjectOptions,
+	): SymbolEntity | null {
+		console.debug(`get object '${word}' from data with`, options);
+		if (!options.hasNoClasses) {
+			const classReference = data.getClass(word);
+			if (classReference) {
+				return classReference;
+			}
+		}
+
+		if (!options.hasNoFunctions) {
+			const functionReference = data.getFunction(word);
+			if (functionReference) {
+				return functionReference;
+			}
+		}
+
+		if (!options.hasNoVariables) {
+			const variableReference = data.getVariable(word);
+			if (variableReference) {
+				return variableReference;
+			}
+		}
+
+		return null;
+	}
+
+	public getObjectFromClass(
+		word: string,
+		fromClass: ClassReference,
+		options: GetObjectOptions,
+	): SymbolEntity | null {
+		console.debug(
+			`get object '${word}' from class'${fromClass.getName()}' with`,
+			options,
+		);
+		if (!fromClass.hasParsed()) {
 			console.log(
-				`class ${outOf.getName()} not parsed yet, parse class now...`,
+				`class'${fromClass.getName()}' not parsed yet, parse class now...`,
 			);
+			fromClass.parseMeRecursively();
 			return null;
 		}
+		if (!options.hasNoFunctions) {
+			const functionReference = fromClass.getFunction(word);
+			if (functionReference) {
+				return functionReference;
+			}
+		}
+		if (!options.hasNoVariables) {
+			const variableReference = fromClass.getVariable(word);
+			if (variableReference) {
+				return variableReference;
+			}
+		}
 		return null;
+	}
+
+	public getVariableFromStruct(
+		word: string,
+		fromStruct: UnrealStruct,
+	): UnrealVariable | null {
+		console.debug(`get variable '${word}' from struct ${fromStruct.getName()}`);
+		const variable = fromStruct.getVariable(word);
+		return variable ?? null;
 	}
 
 	public getClassFromContext(
@@ -132,21 +163,18 @@ export class UnrealData {
 		fromClass?: ClassReference,
 		localVariables: UnrealVariable[] = [],
 	): ClassReference | null {
-		const objects = line.slice(0, -1).split(".");
-		console.log(line);
-		console.log(objects, fromClass?.getName() ?? "");
-
+		const objectWord =
+			extractUnclosedBracketContent(
+				line.slice(0, -1).split("{").pop() || line.slice(0, -1),
+			) || line.slice(0, -1);
+		const objects = objectWord.split(".");
 		if (objects.length === 1) {
-			if (line.endsWith("self.")) {
-				const activeEditor = vscode.window.activeTextEditor;
-				const activeFile = activeEditor?.document.fileName;
-				return this.getClassFromFileName(activeFile);
+			if (line.toLowerCase().endsWith("self.")) {
+				return this.getActiveClass();
 			}
 
-			if (line.endsWith("super.")) {
-				const activeEditor = vscode.window.activeTextEditor;
-				const activeFile = activeEditor?.document.fileName;
-				return this.getClassFromFileName(activeFile)?.getParent() ?? null;
+			if (line.toLowerCase().endsWith("super.")) {
+				return this.getActiveClass()?.getParent() ?? null;
 			}
 
 			if (line.endsWith(").")) {
@@ -155,15 +183,23 @@ export class UnrealData {
 					return this.getClass(className) ?? null;
 				}
 
-				const objectWord = line.split("(")[0];
-				const object = this.getObject(objectWord, fromClass ?? this, {
-					isSecondType: true,
-				});
+				const preBracket = line.split("(")[0];
+				const object = fromClass
+					? (this.getObject(preBracket, fromClass, {
+							isSecondType: true,
+						}) ??
+						this.getObject(preBracket, this, {
+							isSecondType: true,
+						}))
+					: this.getObject(preBracket, this, {
+							isSecondType: true,
+						});
 				if (!object) {
 					return null;
 				}
 
-				const type = this.getObjectType(object, fromClass);
+				const isArray = objectWord.trim().endsWith("]");
+				const type = this.getObjectType(object, fromClass, isArray ? 1 : 0);
 				if (!type || type instanceof ClassReference) {
 					return type;
 				}
@@ -174,7 +210,14 @@ export class UnrealData {
 				);
 			}
 
-			const objectWord = line.slice(0, -1);
+			const classMatch = line.match(/class'([^']+)'\.$/i);
+			if (classMatch) {
+				const className = classMatch[1];
+				const classReference = this.getClass(className);
+				if (classReference) {
+					return classReference;
+				}
+			}
 			const object = this.getObject(objectWord, fromClass ?? this, {
 				hasNoClasses: true,
 				isSecondType: true,
@@ -183,12 +226,13 @@ export class UnrealData {
 			if (!object) {
 				return null;
 			}
-			const type = this.getObjectType(object, fromClass);
-			if (!type || type instanceof ClassReference) {
-				return type;
+			const isArray = objectWord.trim().endsWith("]");
+			const objectType = this.getObjectType(object, fromClass, isArray ? 1 : 0);
+			if (!objectType || objectType instanceof ClassReference) {
+				return objectType;
 			}
 			return this.getClassFromContext(
-				`${type.getName()}.`,
+				`${objectType.getName()}.`,
 				fromClass,
 				localVariables,
 			);
@@ -209,10 +253,10 @@ export class UnrealData {
 	}
 
 	public getObjectType(
-		object: ObjectData,
+		entity: SymbolEntity,
 		itsClass?: ClassReference,
+		secondaryLevel?: number,
 	): SymbolEntity | null {
-		const { entity } = object;
 		if (entity instanceof ClassReference) {
 			return entity;
 		}
@@ -221,7 +265,7 @@ export class UnrealData {
 			entity instanceof UnrealFunction
 				? entity.getReturnType()
 				: entity instanceof UnrealVariable
-					? entity.getType()
+					? entity.getType(secondaryLevel)
 					: undefined;
 
 		if (!typeName) {
@@ -229,14 +273,13 @@ export class UnrealData {
 			return null;
 		}
 
-		console.log(`object type: ${typeName}`);
 		const classReference = this.getClass(typeName);
 		if (classReference) {
 			return classReference;
 		}
 
 		if (itsClass) {
-			return this.getObject(typeName, itsClass, {})?.entity ?? null;
+			return this.getObject(typeName, itsClass, {}) ?? null;
 		}
 		return null;
 	}
@@ -257,11 +300,22 @@ export class UnrealData {
 			return null;
 		}
 		for (const classReference of this.classes) {
-			if (classReference.getFileName() === fileName) {
+			if (
+				classReference.getFileName().toLowerCase() === fileName.toLowerCase()
+			) {
 				return classReference;
 			}
 		}
 		return null;
+	}
+
+	public getActiveClass(): ClassReference | null {
+		const activeEditor = vscode.window.activeTextEditor;
+		const activeFile = activeEditor?.document.fileName;
+		if (!activeFile) {
+			return null;
+		}
+		return this.getClassFromFileName(activeFile);
 	}
 
 	public getFunction(functionName: string): UnrealFunction | null {
@@ -309,7 +363,6 @@ export class UnrealData {
 			if (isParsing) {
 				return ["parsing..."];
 			}
-			this.completionClass = options.fromClass;
 			return this.filterRelevantItems(functions, variables, options);
 		}
 		if (this.inbuiltFunctions.length === 0) {
@@ -330,7 +383,6 @@ export class UnrealData {
 			options,
 		);
 	}
-
 	private filterRelevantItems(
 		functions: UnrealFunction[],
 		variables: VariableBase[],
@@ -490,10 +542,6 @@ export class UnrealData {
 			this.functions = completion.functions;
 			this.variables = completion.variables;
 		}
-	}
-
-	public clearCompletionClass(): void {
-		this.completionClass = null;
 	}
 
 	public addClasses(classes: ClassReference[]): void {

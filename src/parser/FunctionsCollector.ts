@@ -1,13 +1,12 @@
 import { createReadStream, promises, readFileSync } from "node:fs";
 import path from "node:path";
 import { createInterface } from "node:readline";
-import type * as vscode from "vscode";
 import type { ClassReference } from "../data/UnrealClassReference";
 import { UnrealConst } from "../data/UnrealConst";
 import { UnrealFunction } from "../data/UnrealFunction";
 import { UnrealStruct } from "../data/UnrealStruct";
 import { UnrealVariable } from "../data/UnrealVariable";
-import { ClassesCollector } from "./ClassesCollector";
+import type { ClassesCollector } from "./ClassesCollector";
 
 export class FunctionsCollector {
 	private functions: UnrealFunction[] = [];
@@ -15,11 +14,11 @@ export class FunctionsCollector {
 	private consts: UnrealConst[] = [];
 	private structs: UnrealStruct[] = [];
 	private structVariables: UnrealVariable[] = [];
-	private classesCollector: ClassesCollector;
 
-	constructor(private fileName: string) {
-		this.classesCollector = new ClassesCollector(fileName, [], false);
-	}
+	constructor(
+		private fileName: string,
+		private classesCollector: ClassesCollector,
+	) {}
 
 	public async start(): Promise<void> {
 		if (this.fileName) {
@@ -31,7 +30,7 @@ export class FunctionsCollector {
 			if (!classReference) {
 				this.updateClass(null);
 			}
-			console.log("not parsed yet: ", this.fileName);
+			console.log("parsing...", this.fileName);
 			this.updateClass(classReference);
 			await this.saveFunctions(this.fileName);
 			const parentClassName = classReference?.getParentClass();
@@ -39,7 +38,10 @@ export class FunctionsCollector {
 				? this.getFileName(parentClassName)
 				: null;
 			if (parentFileName) {
-				const parentFunctionsCollector = new FunctionsCollector(parentFileName);
+				const parentFunctionsCollector = new FunctionsCollector(
+					parentFileName,
+					this.classesCollector,
+				);
 				await parentFunctionsCollector.start();
 				const parentProperties = parentFunctionsCollector.returnProperties();
 				this.functions = [...this.functions, ...parentProperties.functions];
@@ -133,7 +135,7 @@ export class FunctionsCollector {
 					returnType.trim(),
 					functionName.trim(),
 					args.trim(),
-					lineNumber + 1,
+					lineNumber,
 					fileName,
 					description,
 					isFunction,
@@ -155,7 +157,7 @@ export class FunctionsCollector {
 			varModifiers,
 			varName.trim(),
 			comment,
-			lineNumber + 1,
+			lineNumber,
 			fileName,
 			description,
 		);
@@ -182,7 +184,7 @@ export class FunctionsCollector {
 				description,
 				comment,
 				fileName,
-				lineNumber + 1,
+				lineNumber,
 			),
 		);
 	}
@@ -346,7 +348,7 @@ export class FunctionsCollector {
 
 							const remaining = splitLeftLine.slice(i).join(" ");
 							if (remaining.includes("(") && remaining.includes(")")) {
-								console.log(
+								console.warn(
 									"Failed to parse this function/event:\n",
 									line,
 									"(it probably should fail. If you see a line that fails that shouldn't, contact me)",
@@ -362,43 +364,65 @@ export class FunctionsCollector {
 					}
 				}
 			} else if (leftLine.includes("var")) {
-				const varDocLine = line.includes("//")
+				const varLinesSplitByComment = line.includes("//")
 					? line.split("//")
 					: line.split("/**");
 
-				const varLine = varDocLine[0].trim().split(/\s+/);
-				if (varLine.length === 0 || !varLine[0].toLowerCase().includes("var")) {
+				const varLinesWithoutComment = varLinesSplitByComment[0]
+					.trim()
+					.replace(/[\n\r\t ;]+$/, "")
+					.split(/\s+/);
+				if (
+					varLinesWithoutComment.length === 0 ||
+					!varLinesWithoutComment[0].toLowerCase().includes("var")
+				) {
 					continue;
 				}
 
-				const docLine = varDocLine.length > 1 ? varDocLine[1].trimEnd() : "";
+				const docLine =
+					varLinesSplitByComment.length > 1
+						? varLinesSplitByComment[1].trimEnd()
+						: "";
 				const varNames: string[] = [];
 
-				const lastToken = varLine.pop()?.replace(/[\n\r\t ;]+$/, "");
-				if (!lastToken) {
+				const lastToken =
+					varLinesWithoutComment[varLinesWithoutComment.length - 1];
+
+				// in case there is no space between array name and type like "array<int>intList"
+				if (lastToken.includes(">")) {
+					const match = lastToken.match(/^(.+?>)(\w+)$/);
+					if (match) {
+						const [_, type, name] = match;
+						varLinesWithoutComment[varLinesWithoutComment.length - 1] = type;
+						varLinesWithoutComment.push(name);
+					}
+				}
+				const varName = varLinesWithoutComment.pop();
+				if (!varName) {
 					continue;
 				}
-				varNames.push(lastToken);
+				varNames.push(varName);
 
-				while (
-					varLine.length > 0 &&
-					varLine[varLine.length - 1].includes(",")
-				) {
-					const nextVar = varLine.pop()?.replace(/[\n\r\t ,]+$/, "");
+				const isMultipleDefinition = (varLines: string[]): boolean => {
+					return (
+						varLines.length > 0 && varLines[varLines.length - 1].includes(",")
+					);
+				};
+				while (isMultipleDefinition(varLinesWithoutComment)) {
+					const nextVar = varLinesWithoutComment
+						.pop()
+						?.replace(/[\n\r\t ,]+$/, "");
 					if (!nextVar) {
 						break;
 					}
 					varNames.push(nextVar);
 				}
 
-				for (const rawName of varNames) {
-					const formattedRawName =
-						rawName.includes("<") || rawName.includes(">")
-							? rawName.replace(/<.*?>/g, "")
-							: rawName;
+				const varModifiers = varLinesWithoutComment;
+				for (const name of varNames) {
 					this.addVariable(
-						varLine,
-						formattedRawName,
+						varModifiers,
+						name,
 						docLine,
 						index,
 						fileName,
@@ -420,7 +444,7 @@ export class FunctionsCollector {
 				) {
 					currentDocumentation = "";
 				} else {
-					console.log(
+					console.warn(
 						"Failed to parse const:\n",
 						line,
 						"(it probably should fail. If you see a line that fails that shouldn't, contact me)",

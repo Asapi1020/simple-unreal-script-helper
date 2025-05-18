@@ -6,6 +6,10 @@
 	"engines": {
 		"vscode": "^1.85.0"
 	},
+	"repository": {
+		"type": "git",
+		"url": "git@github.com:Asapi1020/simple-unreal-script-helper.git"
+	},
 	"activationEvents": ["onStartupFinished", "onLanguage:unrealscript"],
 	"main": "./dist/extension.js",
 	"contributes": {
@@ -289,7 +293,9 @@
 	},
 	"enabledApiProposals": ["extensionRuntime"],
 	"scripts": {
-		"compile": "tsc -p ."
+		"compile": "tsc -p .",
+		"build": "vsce package",
+		"start-debug": "code --install-extension simple-unreal-script-extension-0.0.1.vsix"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",

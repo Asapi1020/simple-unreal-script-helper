@@ -4,46 +4,56 @@ import path from "node:path";
 import * as vscode from "vscode";
 import type { SerializableClass } from "../data/SymbolEntity";
 import { ClassReference } from "../data/UnrealClassReference";
+import { FunctionsCollector } from "./FunctionsCollector";
+
+export interface CollectorOptions {
+	fileName?: string;
+	extensionPath?: string;
+	openFolderArr?: string[];
+}
 
 export class ClassesCollector {
 	public activeThreads: Promise<void>[] = [];
 	private classes: ClassReference[] = [];
 	private srcFolder = "";
 
-	constructor(
-		private fileName: string,
-		private openFolderArr: string[],
-		private isFirst: boolean,
-	) {}
-
-	public async start(context: vscode.ExtensionContext): Promise<void> {
-		if (this.isFirst) {
-			for (const folder of this.openFolderArr) {
-				if (folder.includes("Development\\Src")) {
-					console.log("src folder found:", folder);
-					this.srcFolder = folder;
-					if (await this.cacheExists(folder)) {
-						console.log("cache exists. Loading...");
-						await this.loadClassesFromCache();
-					} else {
-						console.log("no cache. parsing...");
-						await this.getClasses(folder);
-						await this.getInbuiltClasses(context);
-					}
-					break;
-				}
+	public async start(options: CollectorOptions): Promise<void> {
+		if (options.openFolderArr) {
+			this.srcFolder =
+				options.openFolderArr.find((folder) =>
+					folder.includes("Development\\Src"),
+				) ?? "";
+			if (await this.cacheExists()) {
+				console.log("cache exists. Loading...");
+				await this.loadClassesFromCache();
+				await this.handleThreads();
+				return;
 			}
-		} else {
-			if (this.fileName) {
-				await this.saveClasses(this.fileName);
+			console.log("no cache. parsing...");
+			for (const folder of options.openFolderArr) {
+				console.log("parsing classes from:", folder);
+				await this.getClasses(folder);
 			}
+			if (options.extensionPath) {
+				await this.getInbuiltClasses(options.extensionPath);
+			} else {
+				console.warn("Extension path not provided. Skipping inbuilt classes.");
+			}
+			await this.handleThreads();
+			return;
 		}
-
-		await this.handleThreads();
+		if (options.fileName) {
+			await this.saveClasses(options.fileName);
+			await this.handleThreads();
+		}
 	}
 
 	public getClass(className: string): ClassReference | null {
-		return this.classes.find((c) => c.getName() === className) ?? null;
+		return (
+			this.classes.find(
+				(c) => c.getName().toLowerCase() === className.toLowerCase(),
+			) ?? null
+		);
 	}
 
 	public addClass(
@@ -85,13 +95,11 @@ export class ClassesCollector {
 		}
 	}
 
-	private async getInbuiltClasses(
-		context: vscode.ExtensionContext,
-	): Promise<void> {
+	private async getInbuiltClasses(extensionPath: string): Promise<void> {
 		const inbuilt = ["Array", "Class", "HiddenFunctions"];
 		for (const name of inbuilt) {
 			const filePath = path.join(
-				context.extensionPath,
+				extensionPath,
 				"src",
 				"in-built-classes",
 				`${name}.uc`,
@@ -104,7 +112,8 @@ export class ClassesCollector {
 	private async saveClasses(fileName: string): Promise<void> {
 		let description = "";
 		const inbuiltClasses = ["Array", "Class", "HiddenFunctions"];
-		const lines = (await readFile(fileName, "utf-8")).split(/\r?\n/);
+		const encoding = await FunctionsCollector.detectEncoding(fileName);
+		const lines = (await readFile(fileName, encoding)).split(/\r?\n/);
 
 		for (const line of lines) {
 			description += `${line}\n`;
@@ -134,9 +143,9 @@ export class ClassesCollector {
 		}
 	}
 
-	private async cacheExists(folder: string): Promise<boolean> {
-		const cachePath = `${folder}\\classes_cache.json`;
-		console.debug("Checking cache path:", cachePath);
+	private async cacheExists(): Promise<boolean> {
+		const cachePath = `${this.srcFolder}\\classes_cache.json`;
+		console.log("Checking cache path:", cachePath);
 		return fs.promises
 			.access(cachePath)
 			.then(() => true)
@@ -148,10 +157,10 @@ export class ClassesCollector {
 		try {
 			await fs.promises.access(path);
 
-			const json = await fs.promises.readFile(path, "utf-8");
+			const encoding = await FunctionsCollector.detectEncoding(path);
+			const json = await fs.promises.readFile(path, encoding);
 			const rawClasses: SerializableClass[] = JSON.parse(json);
-
-			this.classes = rawClasses.map((raw) => {
+			const cacheClasses = rawClasses.map((raw) => {
 				const c = new ClassReference(
 					raw.name,
 					raw.parentClassName,
@@ -162,6 +171,7 @@ export class ClassesCollector {
 				c.setCollectorReference(this);
 				return c;
 			});
+			this.classes.push(...cacheClasses);
 
 			console.log("Classes loaded from cache.");
 		} catch (err) {
@@ -211,24 +221,18 @@ export class ClassesCollector {
 	private async saveClassesToCache(): Promise<void> {
 		if (this.srcFolder) {
 			const filePath = path.join(this.srcFolder, "classes_cache.json");
-			const json = JSON.stringify(
-				this.classes,
-				ClassesCollector.removeCircularReferences(),
-				2,
-			);
+			console.debug("Saving Classes: ", this.classes.length);
+			const rawClasses: SerializableClass[] = this.classes.map((classRef) => {
+				return {
+					name: classRef.getName(),
+					parentClassName: classRef.getParentClass(),
+					description: classRef.getDescription(),
+					fileName: classRef.getFileName(),
+				};
+			});
+			const json = JSON.stringify(rawClasses, null, 2);
 			fs.writeFileSync(filePath, json, "utf-8");
-			console.debug("Classes saved to cache.", filePath);
+			console.log("Classes saved to cache.", filePath);
 		}
-	}
-
-	private static removeCircularReferences() {
-		const seen = new WeakSet();
-		return (_key: string, value: unknown) => {
-			if (typeof value === "object" && value !== null) {
-				if (seen.has(value)) return undefined;
-				seen.add(value);
-			}
-			return value;
-		};
 	}
 }

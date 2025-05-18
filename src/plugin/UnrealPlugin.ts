@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
-import type { ClassReference } from "../data/UnrealClassReference";
-import type { GetObjectOptions, UnrealData } from "../data/UnrealData";
-import { ClassesCollector } from "../parser/ClassesCollector";
+import type { UnrealData } from "../data/UnrealData";
+import type { ClassesCollector } from "../parser/ClassesCollector";
 import { FunctionsCollector } from "../parser/FunctionsCollector";
 import { UnrealCompletionProvider } from "../parser/UnrealCompletionProvider";
 import { EventManager } from "./EventManager";
+import { UnrealDefinitionProvider } from "./UnrealDefinitionProvider";
 
 export function isUnrealScriptFile(document: vscode.TextDocument): boolean {
 	return (
@@ -25,6 +25,7 @@ export class UnrealPlugin {
 
 	constructor(
 		private context: vscode.ExtensionContext,
+		private collector: ClassesCollector,
 		unrealData: UnrealData,
 	) {
 		this.unrealData = unrealData;
@@ -48,6 +49,10 @@ export class UnrealPlugin {
 	}
 
 	public onActivated(): vscode.Disposable {
+		const editor = vscode.window.activeTextEditor;
+		if (editor) {
+			this.activated(editor);
+		}
 		return vscode.window.onDidChangeActiveTextEditor((editor) => {
 			if (editor) {
 				this.activated(editor);
@@ -65,18 +70,25 @@ export class UnrealPlugin {
 		);
 	}
 
+	public onGoToDefinition(): vscode.Disposable {
+		const provider = new UnrealDefinitionProvider(this.unrealData);
+		return vscode.languages.registerDefinitionProvider(
+			{ language: "UnrealScript", pattern: "**/*.uc" },
+			provider,
+		);
+	}
+
 	private async activated(editor: vscode.TextEditor): Promise<void> {
 		if (!isUnrealScriptFile(editor.document)) {
 			return;
 		}
 
-		this.unrealData.clearCompletionClass();
 		this.isBuiltForCurrentFile = true;
 
 		if (this.isFirstTime) {
 			this.isFirstTime = false;
 			this.eventManager = new EventManager();
-			this.eventManager.goToDefinition.handle(this.onGoToDefinition.bind(this));
+			// this.eventManager.goToDefinition.handle(this.onGoToDefinition.bind(this));
 			// this.eventManager.rebuildCache.handle(this.onRebuildCache.bind(this));
 			// this.eventManager.getClassReference.handle(
 			// 	this.onGetClassReference.bind(this),
@@ -94,8 +106,7 @@ export class UnrealPlugin {
 			const folders = vscode.workspace.workspaceFolders?.map(
 				(folder) => folder.uri.fsPath,
 			);
-			const collector = new ClassesCollector("", folders ?? [], true);
-			this.handleClassesCollector(editor, collector);
+			this.handleClassesCollector(editor, "", folders);
 			return;
 		}
 
@@ -106,6 +117,7 @@ export class UnrealPlugin {
 			!this.fileNames.includes(fileName)
 		) {
 			console.log("start parsing file:", fileName);
+			this.handleClassesCollector(editor, fileName, []);
 			this.fileNames.push(fileName);
 			this.handleFunctionsCollector(fileName);
 			return;
@@ -115,124 +127,22 @@ export class UnrealPlugin {
 		//this.loadCompletionsForFile(fileName);
 	}
 
-	private onGoToDefinition(
-		leftLine: string,
-		word: string,
-		fullLine: string,
-	): void {
-		const window = vscode.window;
-		const editor = window.activeTextEditor;
-		if (!editor) return;
-
-		const activeFile = editor.document.fileName;
-
-		if (
-			fullLine.includes("function") ||
-			fullLine.includes("event") ||
-			leftLine.endsWith("super.")
-		) {
-			const success = this.getAndOpenObject(word, this.unrealData, window, {
-				hasNoFunctions: true,
-				hasNoVariables: true,
-			});
-
-			if (!success) {
-				const parentClass = this.unrealData
-					.getClassFromFileName(activeFile)
-					?.getParent();
-				if (parentClass) {
-					this.getAndOpenObject(word, parentClass, window, {
-						hasNoClasses: true,
-					});
-				}
-			}
-			return;
-		}
-
-		if (leftLine === "" || leftLine.endsWith("self.")) {
-			switch (word) {
-				case "super": {
-					const parentClass = this.unrealData
-						.getClassFromFileName(activeFile)
-						?.getParent();
-					if (parentClass) {
-						this.getAndOpenObject(
-							parentClass.getName(),
-							this.unrealData,
-							window,
-						);
-					}
-					return;
-				}
-				case "self": {
-					const className = this.unrealData
-						.getClassFromFileName(activeFile)
-						?.getName();
-					if (className) {
-						this.getAndOpenObject(className, this.unrealData, window);
-					}
-					return;
-				}
-				default: {
-					this.getAndOpenObject(word, this.unrealData, window);
-					return;
-				}
-			}
-		}
-
-		if (leftLine.endsWith(".")) {
-			const contextClass = this.unrealData.getClassFromContext(leftLine);
-			if (contextClass) {
-				this.getAndOpenObject(word, contextClass, window, {
-					hasNoClasses: true,
-				});
-			} else {
-				window.setStatusBarMessage("just a moment...");
-				console.log("still parsing...");
-			}
-			return;
-		}
-
-		console.warn("case not handled!!!", leftLine);
-	}
-
-	private getAndOpenObject(
-		word: string,
-		outOf: ClassReference | UnrealData,
-		window: typeof vscode.window,
-		options: GetObjectOptions = {},
-	): boolean {
-		const object = this.unrealData.getObject(word, outOf, options);
-
-		if (object) {
-			const uri = vscode.Uri.file(object.entity.getFileName());
-			const position = new vscode.Position(object.entity.getLineNumber(), 0);
-
-			vscode.workspace.openTextDocument(uri).then((doc) => {
-				window.showTextDocument(doc, { preview: false }).then((editor) => {
-					const range = new vscode.Range(position, position);
-					editor.selection = new vscode.Selection(position, position);
-					editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
-				});
-			});
-
-			return true;
-		}
-		window.setStatusBarMessage("Just a moment...");
-		return false;
-	}
-
 	private async handleClassesCollector(
 		editor: vscode.TextEditor,
-		collector: ClassesCollector,
+		fileName?: string,
+		openFolderArr?: string[],
 	): Promise<void> {
-		await collector.start(this.context);
-		this.unrealData.addClasses(collector.returnClasses());
+		await this.collector.start({
+			extensionPath: this.context.extensionPath,
+			fileName,
+			openFolderArr,
+		});
+		this.unrealData.addClasses(this.collector.returnClasses());
 		this.handleCollector(editor);
 	}
 
 	private async handleFunctionsCollector(fileName: string): Promise<void> {
-		const collector = new FunctionsCollector(fileName);
+		const collector = new FunctionsCollector(fileName, this.collector);
 		await collector.start();
 		const properties = collector.returnProperties();
 		this.unrealData.addFunctions(properties.functions);

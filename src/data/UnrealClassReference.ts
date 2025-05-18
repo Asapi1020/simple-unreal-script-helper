@@ -21,6 +21,7 @@ export class ClassReference {
 	private consts: UnrealConst[] = [];
 	private structs: UnrealStruct[] = [];
 	private bWasParsed = false;
+	private isParsing = false;
 	private parentClass: ClassReference | null = null;
 
 	constructor(
@@ -87,6 +88,13 @@ export class ClassReference {
 		return this.parentClass;
 	}
 
+	public safeLoadParent(): ClassReference | null {
+		if (!this.parentClass) {
+			this.linkToParent();
+		}
+		return this.parentClass;
+	}
+
 	public getParentClass(): string {
 		return this.parentClassName;
 	}
@@ -121,12 +129,15 @@ export class ClassReference {
 	}
 
 	public getFunction(name: string): UnrealFunction | null {
+		if (!this.bWasParsed) {
+			this.parseMeRecursively();
+			return null;
+		}
 		for (const func of this.functions) {
 			if (name.toLowerCase() === func.getName().toLowerCase()) {
 				return func;
 			}
 		}
-
 		const parentClass = this.collectorReference.getClass(this.parentClassName);
 		return parentClass?.getFunction(name) ?? null;
 	}
@@ -136,8 +147,12 @@ export class ClassReference {
 	}
 
 	public getVariable(name: string): UnrealVariable | null {
+		if (!this.bWasParsed) {
+			this.parseMeRecursively();
+			return null;
+		}
 		for (const variable of this.variables) {
-			if (name.toLowerCase() === variable?.getName().toLowerCase()) {
+			if (name.toLowerCase() === variable.getName().toLowerCase()) {
 				return variable;
 			}
 		}
@@ -161,14 +176,27 @@ export class ClassReference {
 	}
 
 	public async parseMe(): Promise<void> {
-		const collector = new FunctionsCollector(this.fileName);
+		if (this.isParsing) {
+			return;
+		}
+		const collector = new FunctionsCollector(
+			this.fileName,
+			this.collectorReference,
+		);
+		this.isParsing = true;
 		await collector.start();
+		this.isParsing = false;
 		const properties = collector.returnProperties();
 		this.functions = properties.functions;
 		this.variables = properties.variables;
 		this.consts = properties.consts;
 		this.structs = properties.structs;
 		this.bWasParsed = true;
+	}
+
+	public async parseMeRecursively(): Promise<void> {
+		await this.parseMe();
+		await this.parentClass?.parseMeRecursively();
 	}
 
 	public insertDynamicSnippet(view: vscode.TextEditor): void {

@@ -1,0 +1,7 @@
+node_modules
+UnrealScriptIDE
+src
+.vscode
+README.md
+Biomefile
+.gitignore
