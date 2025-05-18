@@ -19,31 +19,30 @@ export class ClassesCollector {
 
 	public async start(options: CollectorOptions): Promise<void> {
 		if (options.openFolderArr) {
-			for (const folder of options.openFolderArr) {
-				if (folder.includes("Development\\Src")) {
-					this.srcFolder = folder;
-					console.log("src folder found:", folder);
-					if (await this.cacheExists(folder)) {
-						console.log("cache exists. Loading...");
-						await this.loadClassesFromCache();
-					} else {
-						console.log("no cache. parsing...");
-						await this.getClasses(folder);
-						if (options.extensionPath) {
-							await this.getInbuiltClasses(options.extensionPath);
-						} else {
-							console.warn(
-								"Extension path not provided. Skipping inbuilt classes.",
-							);
-						}
-					}
-				} else {
-					console.log("dev folder found:", folder);
-					await this.getClasses(folder);
-				}
+			this.srcFolder =
+				options.openFolderArr.find((folder) =>
+					folder.includes("Development\\Src"),
+				) ?? "";
+			if (await this.cacheExists()) {
+				console.log("cache exists. Loading...");
+				await this.loadClassesFromCache();
 				await this.handleThreads();
+				return;
 			}
-		} else if (options.fileName) {
+			console.log("no cache. parsing...");
+			for (const folder of options.openFolderArr) {
+				console.log("parsing classes from:", folder);
+				await this.getClasses(folder);
+			}
+			if (options.extensionPath) {
+				await this.getInbuiltClasses(options.extensionPath);
+			} else {
+				console.warn("Extension path not provided. Skipping inbuilt classes.");
+			}
+			await this.handleThreads();
+			return;
+		}
+		if (options.fileName) {
 			await this.saveClasses(options.fileName);
 			await this.handleThreads();
 		}
@@ -144,8 +143,8 @@ export class ClassesCollector {
 		}
 	}
 
-	private async cacheExists(folder: string): Promise<boolean> {
-		const cachePath = `${folder}\\classes_cache.json`;
+	private async cacheExists(): Promise<boolean> {
+		const cachePath = `${this.srcFolder}\\classes_cache.json`;
 		console.log("Checking cache path:", cachePath);
 		return fs.promises
 			.access(cachePath)
