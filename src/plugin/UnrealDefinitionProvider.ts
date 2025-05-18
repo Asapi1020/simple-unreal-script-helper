@@ -54,8 +54,7 @@ class GoToDefinitionHelper {
 		}
 
 		if (
-			fullLine.toLowerCase().includes("function") ||
-			fullLine.toLowerCase().includes("event") ||
+			GoToDefinitionHelper.isFunctionOrEvent(leftLine) ||
 			leftLine.toLowerCase().endsWith("super.")
 		) {
 			const classDef = this.getObjectDef(word, this.unrealData, {
@@ -79,7 +78,7 @@ class GoToDefinitionHelper {
 			return null;
 		}
 
-		if (leftLine === "") {
+		if (leftLine === "" || GoToDefinitionHelper.isInBracketVariable(leftLine)) {
 			switch (word.toLowerCase()) {
 				case "super": {
 					const parentClass = thisClass.safeLoadParent();
@@ -96,10 +95,7 @@ class GoToDefinitionHelper {
 					break;
 				}
 				default:
-					return (
-						this.getObjectDef(word, this.unrealData) ??
-						this.getObjectDef(word, thisClass)
-					);
+					return this.getObjectDef(word, thisClass);
 			}
 		}
 
@@ -142,5 +138,20 @@ class GoToDefinitionHelper {
 			};
 		}
 		return null;
+	}
+
+	static isFunctionOrEvent(line: string): boolean {
+		return (
+			(line.toLowerCase().includes("function") ||
+				line.toLowerCase().includes("event")) &&
+			!line.includes("{")
+		);
+	}
+
+	static isInBracketVariable(line: string): boolean {
+		return (
+			(line.endsWith("(") || line.split("(").pop()?.trim().endsWith(",")) ??
+			false
+		);
 	}
 }
