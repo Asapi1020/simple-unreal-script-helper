@@ -19,7 +19,7 @@ export class UnrealDefinitionProvider implements vscode.DefinitionProvider {
 		const wordRange = document.getWordRangeAtPosition(position);
 		if (!wordRange) return;
 		const word = document.getText(wordRange);
-		const leftLine = line.split(word)[0].trim();
+		const leftLine = line.substring(0, wordRange.start.character).trim();
 
 		const activeFile = document.fileName;
 
@@ -78,7 +78,12 @@ class GoToDefinitionHelper {
 			return null;
 		}
 
-		if (leftLine === "" || GoToDefinitionHelper.isInBracketVariable(leftLine)) {
+		if (
+			leftLine === "" ||
+			leftLine.toLowerCase() === "foreach" ||
+			GoToDefinitionHelper.isInBracketVariable(leftLine) ||
+			GoToDefinitionHelper.endsWithOperator(leftLine)
+		) {
 			switch (word.toLowerCase()) {
 				case "super": {
 					const parentClass = thisClass.safeLoadParent();
@@ -95,7 +100,10 @@ class GoToDefinitionHelper {
 					break;
 				}
 				default:
-					return this.getObjectDef(word, thisClass);
+					return (
+						this.getObjectDef(word, thisClass) ??
+						this.getObjectDef(word, this.unrealData)
+					);
 			}
 		}
 
@@ -107,8 +115,22 @@ class GoToDefinitionHelper {
 		}
 
 		if (leftLine.endsWith(".")) {
+			const operatorMatch = [...leftLine.matchAll(/[+\-*/%&|^!<>=]/g)];
+			const operatorTrimmed =
+				operatorMatch.length === 0
+					? leftLine
+					: leftLine
+							.slice(operatorMatch[operatorMatch.length - 1].index + 1)
+							.trim();
+
+			const foreachMatch = operatorTrimmed.match(/foreach\s*(.*)/i);
+			const foreachTrimmed = foreachMatch
+				? foreachMatch[1].trim()
+				: operatorTrimmed;
+			const staticTrimmed = foreachTrimmed.replace(/static\./gi, "");
+
 			const contextClass = this.unrealData.getClassFromContext(
-				leftLine,
+				staticTrimmed,
 				thisClass,
 			);
 			if (contextClass) {
@@ -117,6 +139,16 @@ class GoToDefinitionHelper {
 				});
 			}
 			return null;
+		}
+
+		if (leftLine.toLowerCase().endsWith("class'")) {
+			const objectDef = this.getObjectDef(word, this.unrealData, {
+				hasNoFunctions: true,
+				hasNoVariables: true,
+			});
+			if (objectDef) {
+				return objectDef;
+			}
 		}
 
 		console.debug("case not handled for: ", leftLine);
@@ -150,8 +182,17 @@ class GoToDefinitionHelper {
 
 	static isInBracketVariable(line: string): boolean {
 		return (
-			(line.endsWith("(") || line.split("(").pop()?.trim().endsWith(",")) ??
+			(line.endsWith("{") ||
+				line.endsWith(";") ||
+				line.endsWith("(") ||
+				line.split("(").pop()?.trim().endsWith(",")) ??
 			false
 		);
+	}
+
+	static endsWithOperator(line: string): boolean {
+		const OPERATOR_REGEX = /[+\-*/%&|^!<>=]$/;
+		const lowerCaseLine = line.toLowerCase();
+		return OPERATOR_REGEX.test(lowerCaseLine.trim());
 	}
 }

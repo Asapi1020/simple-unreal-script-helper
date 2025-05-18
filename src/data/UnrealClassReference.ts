@@ -130,7 +130,7 @@ export class ClassReference {
 
 	public getFunction(name: string): UnrealFunction | null {
 		if (!this.bWasParsed) {
-			this.parseMe();
+			this.parseMeRecursively();
 			return null;
 		}
 		for (const func of this.functions) {
@@ -148,7 +148,7 @@ export class ClassReference {
 
 	public getVariable(name: string): UnrealVariable | null {
 		if (!this.bWasParsed) {
-			this.parseMe();
+			this.parseMeRecursively();
 			return null;
 		}
 		for (const variable of this.variables) {
@@ -192,6 +192,11 @@ export class ClassReference {
 		this.consts = properties.consts;
 		this.structs = properties.structs;
 		this.bWasParsed = true;
+	}
+
+	public async parseMeRecursively(): Promise<void> {
+		await this.parseMe();
+		await this.parentClass?.parseMeRecursively();
 	}
 
 	public insertDynamicSnippet(view: vscode.TextEditor): void {

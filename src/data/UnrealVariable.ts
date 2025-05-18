@@ -32,7 +32,9 @@ export class UnrealVariable implements VariableBase {
 
 	public getType(secondaryLevel = 0, newType = ""): string {
 		const arrayOrClassIndex = this.modifiers.findIndex(
-			(mod) => mod.includes("Array") || mod.includes("Class"),
+			(mod) =>
+				mod.toLowerCase().includes("array") ||
+				mod.toLowerCase().includes("class"),
 		);
 
 		const type =
@@ -40,10 +42,9 @@ export class UnrealVariable implements VariableBase {
 			(arrayOrClassIndex >= 0
 				? this.modifiers.slice(arrayOrClassIndex).join(" ").trim()
 				: this.modifiers[this.modifiers.length - 1].trim());
-
 		if (secondaryLevel > 0) {
 			const parts = type.split("<").slice(1);
-			return this.getType(secondaryLevel - 1, parts.join("<"));
+			return this.getType(secondaryLevel - 1, parts.join("<")).slice(0, -1);
 		}
 
 		const lowerType = type.toLowerCase();

@@ -30,7 +30,7 @@ export class FunctionsCollector {
 			if (!classReference) {
 				this.updateClass(null);
 			}
-			console.log("not parsed yet: ", this.fileName);
+			console.log("parsing...", this.fileName);
 			this.updateClass(classReference);
 			await this.saveFunctions(this.fileName);
 			const parentClassName = classReference?.getParentClass();

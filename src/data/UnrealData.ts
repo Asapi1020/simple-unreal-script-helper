@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import type { ClassesCollector } from "../parser/ClassesCollector";
+import { extractUnclosedBracketContent } from "../parser/parser";
 import type { SymbolEntity, VariableBase } from "./SymbolEntity";
 import { ClassReference } from "./UnrealClassReference";
 import { UnrealFunction } from "./UnrealFunction";
@@ -130,7 +131,7 @@ export class UnrealData {
 			console.log(
 				`class'${fromClass.getName()}' not parsed yet, parse class now...`,
 			);
-			fromClass.parseMe();
+			fromClass.parseMeRecursively();
 			return null;
 		}
 		if (!options.hasNoFunctions) {
@@ -162,18 +163,18 @@ export class UnrealData {
 		fromClass?: ClassReference,
 		localVariables: UnrealVariable[] = [],
 	): ClassReference | null {
-		const objects = line.slice(0, -1).split(".");
+		const objectWord =
+			extractUnclosedBracketContent(
+				line.slice(0, -1).split("{").pop() || line.slice(0, -1),
+			) || line.slice(0, -1);
+		const objects = objectWord.split(".");
 		if (objects.length === 1) {
-			if (line.endsWith("self.")) {
-				const activeEditor = vscode.window.activeTextEditor;
-				const activeFile = activeEditor?.document.fileName;
-				return this.getClassFromFileName(activeFile);
+			if (line.toLowerCase().endsWith("self.")) {
+				return this.getActiveClass();
 			}
 
-			if (line.endsWith("super.")) {
-				const activeEditor = vscode.window.activeTextEditor;
-				const activeFile = activeEditor?.document.fileName;
-				return this.getClassFromFileName(activeFile)?.getParent() ?? null;
+			if (line.toLowerCase().endsWith("super.")) {
+				return this.getActiveClass()?.getParent() ?? null;
 			}
 
 			if (line.endsWith(").")) {
@@ -182,15 +183,23 @@ export class UnrealData {
 					return this.getClass(className) ?? null;
 				}
 
-				const objectWord = line.split("(")[0];
-				const object = this.getObject(objectWord, fromClass ?? this, {
-					isSecondType: true,
-				});
+				const preBracket = line.split("(")[0];
+				const object = fromClass
+					? (this.getObject(preBracket, fromClass, {
+							isSecondType: true,
+						}) ??
+						this.getObject(preBracket, this, {
+							isSecondType: true,
+						}))
+					: this.getObject(preBracket, this, {
+							isSecondType: true,
+						});
 				if (!object) {
 					return null;
 				}
 
-				const type = this.getObjectType(object, fromClass);
+				const isArray = objectWord.trim().endsWith("]");
+				const type = this.getObjectType(object, fromClass, isArray ? 1 : 0);
 				if (!type || type instanceof ClassReference) {
 					return type;
 				}
@@ -201,7 +210,14 @@ export class UnrealData {
 				);
 			}
 
-			const objectWord = line.slice(0, -1);
+			const classMatch = line.match(/class'([^']+)'\.$/i);
+			if (classMatch) {
+				const className = classMatch[1];
+				const classReference = this.getClass(className);
+				if (classReference) {
+					return classReference;
+				}
+			}
 			const object = this.getObject(objectWord, fromClass ?? this, {
 				hasNoClasses: true,
 				isSecondType: true,
@@ -210,7 +226,8 @@ export class UnrealData {
 			if (!object) {
 				return null;
 			}
-			const objectType = this.getObjectType(object, fromClass);
+			const isArray = objectWord.trim().endsWith("]");
+			const objectType = this.getObjectType(object, fromClass, isArray ? 1 : 0);
 			if (!objectType || objectType instanceof ClassReference) {
 				return objectType;
 			}
@@ -238,6 +255,7 @@ export class UnrealData {
 	public getObjectType(
 		entity: SymbolEntity,
 		itsClass?: ClassReference,
+		secondaryLevel?: number,
 	): SymbolEntity | null {
 		if (entity instanceof ClassReference) {
 			return entity;
@@ -247,7 +265,7 @@ export class UnrealData {
 			entity instanceof UnrealFunction
 				? entity.getReturnType()
 				: entity instanceof UnrealVariable
-					? entity.getType()
+					? entity.getType(secondaryLevel)
 					: undefined;
 
 		if (!typeName) {
@@ -255,7 +273,6 @@ export class UnrealData {
 			return null;
 		}
 
-		console.log(`object type: ${typeName}`);
 		const classReference = this.getClass(typeName);
 		if (classReference) {
 			return classReference;
@@ -290,6 +307,15 @@ export class UnrealData {
 			}
 		}
 		return null;
+	}
+
+	public getActiveClass(): ClassReference | null {
+		const activeEditor = vscode.window.activeTextEditor;
+		const activeFile = activeEditor?.document.fileName;
+		if (!activeFile) {
+			return null;
+		}
+		return this.getClassFromFileName(activeFile);
 	}
 
 	public getFunction(functionName: string): UnrealFunction | null {
