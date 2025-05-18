@@ -96,7 +96,10 @@ class GoToDefinitionHelper {
 					break;
 				}
 				default:
-					return this.getObjectDef(word, this.unrealData);
+					return (
+						this.getObjectDef(word, this.unrealData) ??
+						this.getObjectDef(word, thisClass)
+					);
 			}
 		}
 

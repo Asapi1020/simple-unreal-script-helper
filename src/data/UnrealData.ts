@@ -126,6 +126,13 @@ export class UnrealData {
 			`get object '${word}' from class'${fromClass.getName()}' with`,
 			options,
 		);
+		if (!fromClass.hasParsed()) {
+			console.log(
+				`class'${fromClass.getName()}' not parsed yet, parse class now...`,
+			);
+			fromClass.parseMe();
+			return null;
+		}
 		if (!options.hasNoFunctions) {
 			const functionReference = fromClass.getFunction(word);
 			if (functionReference) {
@@ -137,12 +144,6 @@ export class UnrealData {
 			if (variableReference) {
 				return variableReference;
 			}
-		}
-		if (!fromClass.hasParsed()) {
-			console.log(
-				`class'${fromClass.getName()}' not parsed yet, parse class now...`,
-			);
-			fromClass.parseMe();
 		}
 		return null;
 	}

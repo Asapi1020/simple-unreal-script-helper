@@ -21,6 +21,7 @@ export class ClassReference {
 	private consts: UnrealConst[] = [];
 	private structs: UnrealStruct[] = [];
 	private bWasParsed = false;
+	private isParsing = false;
 	private parentClass: ClassReference | null = null;
 
 	constructor(
@@ -128,6 +129,10 @@ export class ClassReference {
 	}
 
 	public getFunction(name: string): UnrealFunction | null {
+		if (!this.bWasParsed) {
+			this.parseMe();
+			return null;
+		}
 		for (const func of this.functions) {
 			if (name.toLowerCase() === func.getName().toLowerCase()) {
 				return func;
@@ -142,8 +147,12 @@ export class ClassReference {
 	}
 
 	public getVariable(name: string): UnrealVariable | null {
+		if (!this.bWasParsed) {
+			this.parseMe();
+			return null;
+		}
 		for (const variable of this.variables) {
-			if (name.toLowerCase() === variable?.getName().toLowerCase()) {
+			if (name.toLowerCase() === variable.getName().toLowerCase()) {
 				return variable;
 			}
 		}
@@ -167,11 +176,16 @@ export class ClassReference {
 	}
 
 	public async parseMe(): Promise<void> {
+		if (this.isParsing) {
+			return;
+		}
 		const collector = new FunctionsCollector(
 			this.fileName,
 			this.collectorReference,
 		);
+		this.isParsing = true;
 		await collector.start();
+		this.isParsing = false;
 		const properties = collector.returnProperties();
 		this.functions = properties.functions;
 		this.variables = properties.variables;
