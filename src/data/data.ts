@@ -1,11 +1,8 @@
 import * as vscode from "vscode";
 
-let isHelperPanelOn = false;
 let outputChannel: vscode.OutputChannel | undefined;
 
 export function printToPanel(view: vscode.TextEditor, text: string, isOverwrite = true, isLog = false): void {
-	isHelperPanelOn = true;
-
 	if (!outputChannel || isOverwrite) {
 		if (outputChannel) {
 			outputChannel.dispose();

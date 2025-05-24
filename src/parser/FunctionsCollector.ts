@@ -152,7 +152,13 @@ export class FunctionsCollector {
 		this.consts.push(new UnrealConst(constName.trim(), value, description, comment, fileName, lineNumber));
 	}
 
-	private addStruct(structName: string, value: string, lineNumber: number, fileName: string, description: string) {
+	private addStruct(
+		structName: string,
+		value: string,
+		lineNumber: number,
+		fileName: string,
+		description: string,
+	): void {
 		this.structs.push(new UnrealStruct(structName, value, lineNumber, fileName, description));
 	}
 
@@ -200,7 +206,7 @@ export class FunctionsCollector {
 			if (isStruct) {
 				if (line.includes("};")) {
 					isStruct = false;
-					this.structs[this.structs.length - 1].saveVariables(this.structVariables);
+					this.structs.at(-1)?.saveVariables(this.structVariables);
 					this.structVariables = [];
 				}
 			}
@@ -227,16 +233,18 @@ export class FunctionsCollector {
 					isBracketOnSameLine = true;
 					const newLine = `${longLine.trim().split(/\s+/).join(" ")})`;
 					if (
-						!this.extractFunctions(
-							newLine,
-							newLine,
-							index,
-							fileName,
-							currentDocumentation,
-							regexFunction,
-							regexEvent,
-						) &&
-						!this.extractComplicatedFunction(newLine, index, fileName, currentDocumentation, regexFunction, regexEvent)
+						!(
+							this.extractFunctions(
+								newLine,
+								newLine,
+								index,
+								fileName,
+								currentDocumentation,
+								regexFunction,
+								regexEvent,
+							) ||
+							this.extractComplicatedFunction(newLine, index, fileName, currentDocumentation, regexFunction, regexEvent)
+						)
 					) {
 						currentDocumentation = "";
 						continue;
@@ -252,7 +260,11 @@ export class FunctionsCollector {
 				isStruct = true;
 				this.structVariables = [];
 				const newLine = leftLine.includes("extends") ? line.trim().split("extends")[0] : line;
-				const structName = splitLeftLine[splitLeftLine.length - 1];
+				const structName = splitLeftLine.at(-1);
+				if (!structName) {
+					console.warn("Failed to parse struct name:", line);
+					continue;
+				}
 				this.addStruct(structName, newLine, index, fileName, currentDocumentation);
 				currentDocumentation = "";
 			}
@@ -298,10 +310,10 @@ export class FunctionsCollector {
 				const docLine = varLinesSplitByComment.length > 1 ? varLinesSplitByComment[1].trimEnd() : "";
 				const varNames: string[] = [];
 
-				const lastToken = varLinesWithoutComment[varLinesWithoutComment.length - 1];
+				const lastToken = varLinesWithoutComment.at(-1);
 
 				// in case there is no space between array name and type like "array<int>intList"
-				if (lastToken.includes(">")) {
+				if (lastToken?.includes(">")) {
 					const match = lastToken.match(/^(.+?>)(\w+)$/);
 					if (match) {
 						const [_, type, name] = match;
@@ -316,7 +328,7 @@ export class FunctionsCollector {
 				varNames.push(varName);
 
 				const isMultipleDefinition = (varLines: string[]): boolean => {
-					return varLines.length > 0 && varLines[varLines.length - 1].includes(",");
+					return varLines.length > 0 && (varLines.at(-1)?.includes(",") ?? false);
 				};
 				while (isMultipleDefinition(varLinesWithoutComment)) {
 					const nextVar = varLinesWithoutComment.pop()?.replace(/[\n\r\t ,]+$/, "");
@@ -427,7 +439,7 @@ export class FunctionsCollector {
 		}
 
 		const keyword = isFunction ? "function" : "event";
-		const remainder = newLine[newLine.length - 1].trim().split(" ").slice(1).join(" ");
+		const remainder = newLine.at(-1)?.trim().split(" ").slice(1).join(" ");
 		const reconstructedLine = `${newLine[0]} ${keyword} ${remainder}`;
 
 		return this.extractFunctions(

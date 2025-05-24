@@ -82,7 +82,7 @@ export class ClassesCollector {
 		}
 	}
 
-	private async getInbuiltClasses(extensionPath: string): Promise<void> {
+	private getInbuiltClasses(extensionPath: string): void {
 		const inbuilt = ["Array", "Class", "HiddenFunctions"];
 		for (const name of inbuilt) {
 			const filePath = path.join(extensionPath, "src", "in-built-classes", `${name}.uc`);
@@ -153,12 +153,14 @@ export class ClassesCollector {
 		}
 	}
 
-	private async handleThreads() {
+	private async handleThreads(): Promise<void> {
 		let disposed = false;
 		let disposable: vscode.Disposable | undefined;
 
-		const showStatus = (i = 0, dir = 1) => {
-			if (disposed) return;
+		const showStatus = (i = 0, dir = 1): void => {
+			if (disposed) {
+				return;
+			}
 
 			const before = i % 8;
 			const after = 7 - before;

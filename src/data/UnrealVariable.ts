@@ -39,7 +39,11 @@ export class UnrealVariable implements VariableBase {
 			newType ||
 			(arrayOrClassIndex >= 0
 				? this.modifiers.slice(arrayOrClassIndex).join(" ").trim()
-				: this.modifiers[this.modifiers.length - 1].trim());
+				: this.modifiers.at(-1)?.trim());
+		if (!type) {
+			return "";
+		}
+
 		if (secondaryLevel > 0) {
 			const parts = type.split("<").slice(1);
 			return this.getType(secondaryLevel - 1, parts.join("<")).slice(0, -1);
