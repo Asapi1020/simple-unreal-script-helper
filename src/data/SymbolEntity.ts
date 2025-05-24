@@ -1,5 +1,4 @@
 import type * as vscode from "vscode";
-import type { ClassesCollector } from "../parser/ClassesCollector";
 
 export interface SymbolEntity {
 	getDescription(): string;

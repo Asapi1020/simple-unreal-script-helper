@@ -10,14 +10,7 @@ export class UnrealConst implements VariableBase {
 	private fileName: string;
 	private lineNumber: number;
 
-	constructor(
-		name: string,
-		value: string,
-		description: string,
-		comment: string,
-		fileName: string,
-		lineNumber: number,
-	) {
+	constructor(name: string, value: string, description: string, comment: string, fileName: string, lineNumber: number) {
 		this.name = name;
 		this.value = value;
 		this.description = description;

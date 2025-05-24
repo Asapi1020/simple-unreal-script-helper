@@ -1,7 +1,7 @@
 {
-	"While Loop": {
-		"prefix": "while",
-		"body": ["while(${1:True})", "{", "    ${2}", "}"],
-		"description": "Snippet - while"
-	}
+  "While Loop": {
+    "prefix": "while",
+    "body": ["while(${1:True})", "{", "    ${2}", "}"],
+    "description": "Snippet - while"
+  }
 }

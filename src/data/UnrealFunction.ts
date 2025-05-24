@@ -69,9 +69,7 @@ export class UnrealFunction implements SymbolEntity {
 			.split("\n")
 			.filter((line) => {
 				const trimmed = line.trimStart();
-				return (
-					trimmed !== "" && (trimmed.startsWith("/") || trimmed.startsWith("*"))
-				);
+				return trimmed !== "" && (trimmed.startsWith("/") || trimmed.startsWith("*"));
 			})
 			.join("\n");
 	}
@@ -107,9 +105,7 @@ export class UnrealFunction implements SymbolEntity {
 				})
 				.join(", ");
 
-			const snippet = new vscode.SnippetString(
-				`${this.name}(${argumentsSnippet})`,
-			);
+			const snippet = new vscode.SnippetString(`${this.name}(${argumentsSnippet})`);
 			view.insertSnippet(snippet, position);
 		}
 	}

@@ -1,12 +1,7 @@
 {
-	"Simulated Function": {
-		"prefix": "s-function",
-		"body": [
-			"simulated function ${1:FunctionName}(${2:Args})",
-			"{",
-			"    ${3:// body...}",
-			"}"
-		],
-		"description": "Snippet - simulated function"
-	}
+  "Simulated Function": {
+    "prefix": "s-function",
+    "body": ["simulated function ${1:FunctionName}(${2:Args})", "{", "    ${3:// body...}", "}"],
+    "description": "Snippet - simulated function"
+  }
 }

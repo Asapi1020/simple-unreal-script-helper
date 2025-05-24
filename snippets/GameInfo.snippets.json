@@ -1,18 +1,18 @@
 {
-	"UC Game Info": {
-		"prefix": "gameinfo",
-		"body": [
-			"class ${1} extends ${2:SimpleGame};",
-			"",
-			"$7",
-			"",
-			"defaultproperties",
-			"{",
-			"\tDefaultPawnClass=class'$3.$4'",
-			"\tPlayerControllerClass=class'$3.$5'",
-			"\tHUDType=class'$3.$6'",
-			"}"
-		],
-		"description": "Snippet - gameinfo"
-	}
+  "UC Game Info": {
+    "prefix": "gameinfo",
+    "body": [
+      "class ${1} extends ${2:SimpleGame};",
+      "",
+      "$7",
+      "",
+      "defaultproperties",
+      "{",
+      "\tDefaultPawnClass=class'$3.$4'",
+      "\tPlayerControllerClass=class'$3.$5'",
+      "\tHUDType=class'$3.$6'",
+      "}"
+    ],
+    "description": "Snippet - gameinfo"
+  }
 }

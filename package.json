@@ -1,306 +1,307 @@
 {
-	"name": "simple-unreal-script-extension",
-	"publisher": "asapi-1020",
-	"displayName": "Simple Unreal Script Extension",
-	"version": "0.0.1",
-	"engines": {
-		"vscode": "^1.85.0"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git@github.com:Asapi1020/simple-unreal-script-helper.git"
-	},
-	"activationEvents": ["onStartupFinished", "onLanguage:unrealscript"],
-	"main": "./dist/extension.js",
-	"contributes": {
-		"languages": [
-			{
-				"id": "UnrealScript",
-				"extensions": [".uc", ".uci"],
-				"aliases": ["UnrealScript", "unrealscript"],
-				"configuration": "./language-configuration.json"
-			}
-		],
-		"grammars": [
-			{
-				"language": "UnrealScript",
-				"scopeName": "source.unrealscript",
-				"path": "./syntaxes/UnrealScript.tmLanguage.json",
-				"fileTypes": ["uc", "uci"]
-			}
-		],
-		"themes": [
-			{
-				"label": "UnrealScript",
-				"uiTheme": "vs-dark",
-				"path": "./themes/UnrealScript-color-theme.json"
-			}
-		],
-		"snippets": [
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/beginObject.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/Broadcast.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/class.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/cpptext.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/defaultproperties.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/do-until.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/elif.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/else.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/enum.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/event.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/execFunction.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/for.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/foreach.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/function.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/GameInfo.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/HUD.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/if-else.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/if.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/log.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/Pawn.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/PlayerController.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/simulatedEvent.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/simulatedFunction.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/struct.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/switch.snippets.json"
-			},
-			{
-				"language": "UnrealScript",
-				"path": "./snippets/while.snippets.json"
-			}
-		],
-		"configuration": {
-			"title": "UnrealScript Language Basics",
-			"properties": {
-				"unrealscript.unrealKeywords": {
-					"type": "array",
-					"description": "List of UnrealScript keywords.",
-					"item": {
-						"type": "string"
-					},
-					"default": [
-						"abstract",
-						"array",
-						"arraycount",
-						"assert",
-						"auto",
-						"automated",
-						"bool",
-						"break",
-						"button",
-						"byte",
-						"coerce",
-						"collapsecategories",
-						"config",
-						"const",
-						"continue",
-						"default",
-						"delegate",
-						"dependson",
-						"deprecated",
-						"dontcollapsecategories",
-						"edfindable",
-						"editconst",
-						"editconstarray",
-						"editinline",
-						"editinlinenew",
-						"editinlinenotify",
-						"editinlineuse",
-						"enumcount",
-						"event",
-						"exec",
-						"expands",
-						"export",
-						"exportstructs",
-						"extends",
-						"final",
-						"float",
-						"global",
-						"globalconfig",
-						"goto",
-						"guid",
-						"hidecategories",
-						"ignores",
-						"import",
-						"init",
-						"input",
-						"insert",
-						"instanced",
-						"int",
-						"intrinsic",
-						"iterator",
-						"latent",
-						"length",
-						"local",
-						"localized",
-						"name",
-						"new",
-						"noexport",
-						"none",
-						"noteditinlinenew",
-						"notplaceable",
-						"nousercreate",
-						"operator",
-						"optional",
-						"out",
-						"perobjectconfig",
-						"placeable",
-						"pointer",
-						"postoperator",
-						"preoperator",
-						"private",
-						"protected",
-						"reliable",
-						"remove",
-						"return",
-						"rot",
-						"safereplace",
-						"self",
-						"showcategories",
-						"simulated",
-						"singular",
-						"state",
-						"static",
-						"string",
-						"super",
-						"transient",
-						"travel",
-						"unreliable",
-						"var",
-						"vect",
-						"Repnotify",
-						"Client",
-						"Server",
-						"AutoExpandCategories",
-						"implements",
-						"Inherits",
-						"NonTransient",
-						"StructDefaultProperties",
-						"if",
-						"else",
-						"class",
-						"DefaultProperties",
-						"do",
-						"until",
-						"enum",
-						"for",
-						"false",
-						"true",
-						"foreach",
-						"function",
-						"struct",
-						"switch",
-						"while"
-					]
-				},
-				"unrealscript.metadataTags": {
-					"type": "array",
-					"description": "List of UnrealScript metadata tags.",
-					"item": {
-						"type": "string"
-					},
-					"default": [
-						"ToolTip=",
-						"DisplayName=",
-						"ClampMin=",
-						"ClampMax=",
-						"UIMin=",
-						"UIMax=",
-						"ArrayClamp=",
-						"EditCondition=",
-						"MultilineWithMaxRows=",
-						"bShowOnlyWhenTrue=",
-						"FriendlyName=",
-						"AllowAbstract",
-						"AutoComment="
-					]
-				}
-			}
-		}
-	},
-	"enabledApiProposals": ["extensionRuntime"],
-	"scripts": {
-		"compile": "tsc -p .",
-		"build": "vsce package",
-		"start-debug": "code --install-extension simple-unreal-script-extension-0.0.1.vsix"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "^1.9.4",
-		"@types/node": "^22.15.17",
-		"typescript": "^5.8.3",
-		"vscode": "^1.1.37"
-	}
+  "name": "simple-unreal-script-extension",
+  "publisher": "asapi-1020",
+  "displayName": "Simple Unreal Script Extension",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:Asapi1020/simple-unreal-script-helper.git"
+  },
+  "activationEvents": ["onStartupFinished", "onLanguage:unrealscript"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "UnrealScript",
+        "extensions": [".uc", ".uci"],
+        "aliases": ["UnrealScript", "unrealscript"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "UnrealScript",
+        "scopeName": "source.unrealscript",
+        "path": "./syntaxes/UnrealScript.tmLanguage.json",
+        "fileTypes": ["uc", "uci"]
+      }
+    ],
+    "themes": [
+      {
+        "label": "UnrealScript",
+        "uiTheme": "vs-dark",
+        "path": "./themes/UnrealScript-color-theme.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/beginObject.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/Broadcast.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/class.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/cpptext.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/defaultproperties.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/do-until.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/elif.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/else.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/enum.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/event.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/execFunction.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/for.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/foreach.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/function.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/GameInfo.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/HUD.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/if-else.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/if.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/log.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/Pawn.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/PlayerController.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/simulatedEvent.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/simulatedFunction.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/struct.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/switch.snippets.json"
+      },
+      {
+        "language": "UnrealScript",
+        "path": "./snippets/while.snippets.json"
+      }
+    ],
+    "configuration": {
+      "title": "UnrealScript Language Basics",
+      "properties": {
+        "unrealscript.unrealKeywords": {
+          "type": "array",
+          "description": "List of UnrealScript keywords.",
+          "item": {
+            "type": "string"
+          },
+          "default": [
+            "abstract",
+            "array",
+            "arraycount",
+            "assert",
+            "auto",
+            "automated",
+            "bool",
+            "break",
+            "button",
+            "byte",
+            "coerce",
+            "collapsecategories",
+            "config",
+            "const",
+            "continue",
+            "default",
+            "delegate",
+            "dependson",
+            "deprecated",
+            "dontcollapsecategories",
+            "edfindable",
+            "editconst",
+            "editconstarray",
+            "editinline",
+            "editinlinenew",
+            "editinlinenotify",
+            "editinlineuse",
+            "enumcount",
+            "event",
+            "exec",
+            "expands",
+            "export",
+            "exportstructs",
+            "extends",
+            "final",
+            "float",
+            "global",
+            "globalconfig",
+            "goto",
+            "guid",
+            "hidecategories",
+            "ignores",
+            "import",
+            "init",
+            "input",
+            "insert",
+            "instanced",
+            "int",
+            "intrinsic",
+            "iterator",
+            "latent",
+            "length",
+            "local",
+            "localized",
+            "name",
+            "new",
+            "noexport",
+            "none",
+            "noteditinlinenew",
+            "notplaceable",
+            "nousercreate",
+            "operator",
+            "optional",
+            "out",
+            "perobjectconfig",
+            "placeable",
+            "pointer",
+            "postoperator",
+            "preoperator",
+            "private",
+            "protected",
+            "reliable",
+            "remove",
+            "return",
+            "rot",
+            "safereplace",
+            "self",
+            "showcategories",
+            "simulated",
+            "singular",
+            "state",
+            "static",
+            "string",
+            "super",
+            "transient",
+            "travel",
+            "unreliable",
+            "var",
+            "vect",
+            "Repnotify",
+            "Client",
+            "Server",
+            "AutoExpandCategories",
+            "implements",
+            "Inherits",
+            "NonTransient",
+            "StructDefaultProperties",
+            "if",
+            "else",
+            "class",
+            "DefaultProperties",
+            "do",
+            "until",
+            "enum",
+            "for",
+            "false",
+            "true",
+            "foreach",
+            "function",
+            "struct",
+            "switch",
+            "while"
+          ]
+        },
+        "unrealscript.metadataTags": {
+          "type": "array",
+          "description": "List of UnrealScript metadata tags.",
+          "item": {
+            "type": "string"
+          },
+          "default": [
+            "ToolTip=",
+            "DisplayName=",
+            "ClampMin=",
+            "ClampMax=",
+            "UIMin=",
+            "UIMax=",
+            "ArrayClamp=",
+            "EditCondition=",
+            "MultilineWithMaxRows=",
+            "bShowOnlyWhenTrue=",
+            "FriendlyName=",
+            "AllowAbstract",
+            "AutoComment="
+          ]
+        }
+      }
+    }
+  },
+  "enabledApiProposals": ["extensionRuntime"],
+  "scripts": {
+    "format": "biome check --write",
+    "compile": "tsc -p .",
+    "build": "vsce package",
+    "start-debug": "code --install-extension simple-unreal-script-extension-0.0.1.vsix"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^22.15.17",
+    "typescript": "^5.8.3",
+    "vscode": "^1.1.37"
+  }
 }

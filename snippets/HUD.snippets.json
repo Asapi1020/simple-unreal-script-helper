@@ -1,16 +1,7 @@
 {
-	"UC HUD": {
-		"prefix": "hud",
-		"body": [
-			"class ${1:ClassName} extends ${2:HUD};",
-			"",
-			"$3",
-			"",
-			"defaultproperties",
-			"{",
-			"\t",
-			"}"
-		],
-		"description": "Snippet - hud"
-	}
+  "UC HUD": {
+    "prefix": "hud",
+    "body": ["class ${1:ClassName} extends ${2:HUD};", "", "$3", "", "defaultproperties", "{", "\t", "}"],
+    "description": "Snippet - hud"
+  }
 }

@@ -34,31 +34,18 @@ export class FunctionsCollector {
 			this.updateClass(classReference);
 			await this.saveFunctions(this.fileName);
 			const parentClassName = classReference?.getParentClass();
-			const parentFileName = parentClassName
-				? this.getFileName(parentClassName)
-				: null;
+			const parentFileName = parentClassName ? this.getFileName(parentClassName) : null;
 			if (parentFileName) {
-				const parentFunctionsCollector = new FunctionsCollector(
-					parentFileName,
-					this.classesCollector,
-				);
+				const parentFunctionsCollector = new FunctionsCollector(parentFileName, this.classesCollector);
 				await parentFunctionsCollector.start();
 				const parentProperties = parentFunctionsCollector.returnProperties();
 				this.functions = [...this.functions, ...parentProperties.functions];
 				this.variables = [...this.variables, ...parentProperties.variables];
 				this.consts = [...this.consts, ...parentProperties.consts];
 				this.structs = [...this.structs, ...parentProperties.structs];
-				this.structVariables = [
-					...this.structVariables,
-					...parentProperties.structVariables,
-				];
+				this.structVariables = [...this.structVariables, ...parentProperties.structVariables];
 			}
-			classReference?.saveCompletions(
-				this.functions,
-				this.variables,
-				this.consts,
-				this.structs,
-			);
+			classReference?.saveCompletions(this.functions, this.variables, this.consts, this.structs);
 		}
 	}
 
@@ -100,20 +87,12 @@ export class FunctionsCollector {
 		const parentClassName = classMatch[1].toLowerCase();
 
 		if (classReference) {
-			if (
-				classReference.getParentClass() !== parentClassName ||
-				classReference.getDescription() !== description
-			) {
+			if (classReference.getParentClass() !== parentClassName || classReference.getDescription() !== description) {
 				classReference.updateClass(parentClassName, description);
 			}
 		} else {
 			const className = path.basename(this.fileName).split(".")[0];
-			const newClass = this.classesCollector.addClass(
-				className,
-				parentClassName,
-				description,
-				this.fileName,
-			);
+			const newClass = this.classesCollector.addClass(className, parentClassName, description, this.fileName);
 			newClass?.linkToParent();
 		}
 	}
@@ -153,14 +132,7 @@ export class FunctionsCollector {
 		description = "",
 		isStruct = false,
 	): void {
-		const variable = new UnrealVariable(
-			varModifiers,
-			varName.trim(),
-			comment,
-			lineNumber,
-			fileName,
-			description,
-		);
+		const variable = new UnrealVariable(varModifiers, varName.trim(), comment, lineNumber, fileName, description);
 
 		if (isStruct) {
 			this.structVariables.push(variable);
@@ -177,28 +149,11 @@ export class FunctionsCollector {
 		fileName: string,
 		description = "",
 	): void {
-		this.consts.push(
-			new UnrealConst(
-				constName.trim(),
-				value,
-				description,
-				comment,
-				fileName,
-				lineNumber,
-			),
-		);
+		this.consts.push(new UnrealConst(constName.trim(), value, description, comment, fileName, lineNumber));
 	}
 
-	private addStruct(
-		structName: string,
-		value: string,
-		lineNumber: number,
-		fileName: string,
-		description: string,
-	) {
-		this.structs.push(
-			new UnrealStruct(structName, value, lineNumber, fileName, description),
-		);
+	private addStruct(structName: string, value: string, lineNumber: number, fileName: string, description: string) {
+		this.structs.push(new UnrealStruct(structName, value, lineNumber, fileName, description));
 	}
 
 	private async saveFunctions(fileName: string): Promise<void> {
@@ -245,9 +200,7 @@ export class FunctionsCollector {
 			if (isStruct) {
 				if (line.includes("};")) {
 					isStruct = false;
-					this.structs[this.structs.length - 1].saveVariables(
-						this.structVariables,
-					);
+					this.structs[this.structs.length - 1].saveVariables(this.structVariables);
 					this.structVariables = [];
 				}
 			}
@@ -256,10 +209,7 @@ export class FunctionsCollector {
 				isCppText = true;
 			}
 
-			if (
-				trimmedLine.startsWith("/*") ||
-				(trimmedLine.startsWith("/") && currentDocumentation === "")
-			) {
+			if (trimmedLine.startsWith("/*") || (trimmedLine.startsWith("/") && currentDocumentation === "")) {
 				currentDocumentation = line;
 				continue;
 			}
@@ -286,14 +236,7 @@ export class FunctionsCollector {
 							regexFunction,
 							regexEvent,
 						) &&
-						!this.extractComplicatedFunction(
-							newLine,
-							index,
-							fileName,
-							currentDocumentation,
-							regexFunction,
-							regexEvent,
-						)
+						!this.extractComplicatedFunction(newLine, index, fileName, currentDocumentation, regexFunction, regexEvent)
 					) {
 						currentDocumentation = "";
 						continue;
@@ -305,39 +248,17 @@ export class FunctionsCollector {
 			}
 
 			const splitLeftLine = leftLine.trim().split(/\s+/);
-			if (
-				!isStruct &&
-				leftLine.includes("struct") &&
-				splitLeftLine[0] === "struct"
-			) {
+			if (!isStruct && leftLine.includes("struct") && splitLeftLine[0] === "struct") {
 				isStruct = true;
 				this.structVariables = [];
-				const newLine = leftLine.includes("extends")
-					? line.trim().split("extends")[0]
-					: line;
+				const newLine = leftLine.includes("extends") ? line.trim().split("extends")[0] : line;
 				const structName = splitLeftLine[splitLeftLine.length - 1];
-				this.addStruct(
-					structName,
-					newLine,
-					index,
-					fileName,
-					currentDocumentation,
-				);
+				this.addStruct(structName, newLine, index, fileName, currentDocumentation);
 				currentDocumentation = "";
 			}
 
 			if (leftLine.includes("function") || leftLine.includes("event")) {
-				if (
-					this.extractFunctions(
-						line,
-						leftLine,
-						index,
-						fileName,
-						currentDocumentation,
-						regexFunction,
-						regexEvent,
-					)
-				) {
+				if (this.extractFunctions(line, leftLine, index, fileName, currentDocumentation, regexFunction, regexEvent)) {
 					currentDocumentation = "";
 				} else {
 					isFail = true;
@@ -364,29 +285,20 @@ export class FunctionsCollector {
 					}
 				}
 			} else if (leftLine.includes("var")) {
-				const varLinesSplitByComment = line.includes("//")
-					? line.split("//")
-					: line.split("/**");
+				const varLinesSplitByComment = line.includes("//") ? line.split("//") : line.split("/**");
 
 				const varLinesWithoutComment = varLinesSplitByComment[0]
 					.trim()
 					.replace(/[\n\r\t ;]+$/, "")
 					.split(/\s+/);
-				if (
-					varLinesWithoutComment.length === 0 ||
-					!varLinesWithoutComment[0].toLowerCase().includes("var")
-				) {
+				if (varLinesWithoutComment.length === 0 || !varLinesWithoutComment[0].toLowerCase().includes("var")) {
 					continue;
 				}
 
-				const docLine =
-					varLinesSplitByComment.length > 1
-						? varLinesSplitByComment[1].trimEnd()
-						: "";
+				const docLine = varLinesSplitByComment.length > 1 ? varLinesSplitByComment[1].trimEnd() : "";
 				const varNames: string[] = [];
 
-				const lastToken =
-					varLinesWithoutComment[varLinesWithoutComment.length - 1];
+				const lastToken = varLinesWithoutComment[varLinesWithoutComment.length - 1];
 
 				// in case there is no space between array name and type like "array<int>intList"
 				if (lastToken.includes(">")) {
@@ -404,14 +316,10 @@ export class FunctionsCollector {
 				varNames.push(varName);
 
 				const isMultipleDefinition = (varLines: string[]): boolean => {
-					return (
-						varLines.length > 0 && varLines[varLines.length - 1].includes(",")
-					);
+					return varLines.length > 0 && varLines[varLines.length - 1].includes(",");
 				};
 				while (isMultipleDefinition(varLinesWithoutComment)) {
-					const nextVar = varLinesWithoutComment
-						.pop()
-						?.replace(/[\n\r\t ,]+$/, "");
+					const nextVar = varLinesWithoutComment.pop()?.replace(/[\n\r\t ,]+$/, "");
 					if (!nextVar) {
 						break;
 					}
@@ -420,28 +328,12 @@ export class FunctionsCollector {
 
 				const varModifiers = varLinesWithoutComment;
 				for (const name of varNames) {
-					this.addVariable(
-						varModifiers,
-						name,
-						docLine,
-						index,
-						fileName,
-						currentDocumentation,
-						isStruct,
-					);
+					this.addVariable(varModifiers, name, docLine, index, fileName, currentDocumentation, isStruct);
 				}
 
 				currentDocumentation = "";
 			} else if (leftLine.includes("const")) {
-				if (
-					this.extractConst(
-						line,
-						index,
-						fileName,
-						currentDocumentation,
-						regexConst,
-					)
-				) {
+				if (this.extractConst(line, index, fileName, currentDocumentation, regexConst)) {
 					currentDocumentation = "";
 				} else {
 					console.warn(
@@ -491,12 +383,7 @@ export class FunctionsCollector {
 		} else if (leftLine.toLowerCase().includes("event")) {
 			isFunction = false;
 		} else {
-			console.log(
-				"No function or event in",
-				leftLine.toLowerCase(),
-				". full line:",
-				line,
-			);
+			console.log("No function or event in", leftLine.toLowerCase(), ". full line:", line);
 			return false;
 		}
 		const regex: RegExp = isFunction ? regexF : regexE;
@@ -540,11 +427,7 @@ export class FunctionsCollector {
 		}
 
 		const keyword = isFunction ? "function" : "event";
-		const remainder = newLine[newLine.length - 1]
-			.trim()
-			.split(" ")
-			.slice(1)
-			.join(" ");
+		const remainder = newLine[newLine.length - 1].trim().split(" ").slice(1).join(" ");
 		const reconstructedLine = `${newLine[0]} ${keyword} ${remainder}`;
 
 		return this.extractFunctions(
@@ -571,14 +454,7 @@ export class FunctionsCollector {
 		if (match !== null) {
 			const name = match[1];
 			const value = match[2];
-			this.addConst(
-				name,
-				value,
-				comment.trim(),
-				lineNumber,
-				fileName,
-				currentDocumentation,
-			);
+			this.addConst(name, value, comment.trim(), lineNumber, fileName, currentDocumentation);
 			return true;
 		}
 

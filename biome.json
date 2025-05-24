@@ -1,0 +1,49 @@
+{
+  "formatter": {
+    "lineWidth": 120
+  },
+  "linter": {
+    "rules": {
+      "complexity": {
+        "noExcessiveCognitiveComplexity": "warn",
+        "useDateNow": "warn",
+        "useSimplifiedLogicExpression": "warn"
+      },
+      "correctness": {
+        "noConstantMathMinMaxClamp": "warn",
+        "noInvalidNewBuiltin": "warn",
+        "noUnusedFunctionParameters": "warn",
+        "noUnusedImports": "error",
+        "noUnusedPrivateClassMembers": "warn",
+        "noUnusedVariables": "warn"
+      },
+      "nursery": {
+        "noEnum": "error",
+        "noProcessEnv": "warn",
+        "useAtIndex": "warn",
+        "useExplicitType": "warn"
+      },
+      "style": {
+        "useBlockStatements": "warn",
+        "useForOf": "warn",
+        "useSingleCaseStatement": "warn"
+      },
+      "suspicious": {
+        "noEmptyBlockStatements": "warn",
+        "useAwait": "warn"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "indentStyle": "tab",
+      "lineEnding": "lf"
+    }
+  },
+  "json": {
+    "formatter": {
+      "indentStyle": "space",
+      "indentWidth": 2
+    }
+  }
+}

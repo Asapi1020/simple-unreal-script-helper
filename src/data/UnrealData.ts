@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import type { ClassesCollector } from "../parser/ClassesCollector";
 import { extractUnclosedBracketContent } from "../parser/parser";
 import type { SymbolEntity, VariableBase } from "./SymbolEntity";
 import { ClassReference } from "./UnrealClassReference";
@@ -49,11 +48,7 @@ export class UnrealData {
 		}
 	}
 
-	public getObject(
-		word: string,
-		outOf: SymbolEntity | UnrealData,
-		options: GetObjectOptions,
-	): SymbolEntity | null {
+	public getObject(word: string, outOf: SymbolEntity | UnrealData, options: GetObjectOptions): SymbolEntity | null {
 		const isArray = word.trim().endsWith("]");
 		const keyWord = isArray ? word.split("[")[0] : word;
 
@@ -77,8 +72,7 @@ export class UnrealData {
 
 		if (options.localVariables && options.localVariables.length > 0) {
 			const local = options.localVariables.find(
-				(variable) =>
-					variable.getName().toLowerCase() === keyWord.toLowerCase(),
+				(variable) => variable.getName().toLowerCase() === keyWord.toLowerCase(),
 			);
 			if (local) {
 				return local;
@@ -88,11 +82,7 @@ export class UnrealData {
 		return null;
 	}
 
-	public getObjectFromData(
-		word: string,
-		data: UnrealData,
-		options: GetObjectOptions,
-	): SymbolEntity | null {
+	public getObjectFromData(word: string, data: UnrealData, options: GetObjectOptions): SymbolEntity | null {
 		console.debug(`get object '${word}' from data with`, options);
 		if (!options.hasNoClasses) {
 			const classReference = data.getClass(word);
@@ -118,19 +108,10 @@ export class UnrealData {
 		return null;
 	}
 
-	public getObjectFromClass(
-		word: string,
-		fromClass: ClassReference,
-		options: GetObjectOptions,
-	): SymbolEntity | null {
-		console.debug(
-			`get object '${word}' from class'${fromClass.getName()}' with`,
-			options,
-		);
+	public getObjectFromClass(word: string, fromClass: ClassReference, options: GetObjectOptions): SymbolEntity | null {
+		console.debug(`get object '${word}' from class'${fromClass.getName()}' with`, options);
 		if (!fromClass.hasParsed()) {
-			console.log(
-				`class'${fromClass.getName()}' not parsed yet, parse class now...`,
-			);
+			console.log(`class'${fromClass.getName()}' not parsed yet, parse class now...`);
 			fromClass.parseMeRecursively();
 			return null;
 		}
@@ -149,10 +130,7 @@ export class UnrealData {
 		return null;
 	}
 
-	public getVariableFromStruct(
-		word: string,
-		fromStruct: UnrealStruct,
-	): UnrealVariable | null {
+	public getVariableFromStruct(word: string, fromStruct: UnrealStruct): UnrealVariable | null {
 		console.debug(`get variable '${word}' from struct ${fromStruct.getName()}`);
 		const variable = fromStruct.getVariable(word);
 		return variable ?? null;
@@ -164,9 +142,7 @@ export class UnrealData {
 		localVariables: UnrealVariable[] = [],
 	): ClassReference | null {
 		const objectWord =
-			extractUnclosedBracketContent(
-				line.slice(0, -1).split("{").pop() || line.slice(0, -1),
-			) || line.slice(0, -1);
+			extractUnclosedBracketContent(line.slice(0, -1).split("{").pop() || line.slice(0, -1)) || line.slice(0, -1);
 		const objects = objectWord.split(".");
 		if (objects.length === 1) {
 			if (line.toLowerCase().endsWith("self.")) {
@@ -203,11 +179,7 @@ export class UnrealData {
 				if (!type || type instanceof ClassReference) {
 					return type;
 				}
-				return this.getClassFromContext(
-					`${type.getName()}.`,
-					fromClass,
-					localVariables,
-				);
+				return this.getClassFromContext(`${type.getName()}.`, fromClass, localVariables);
 			}
 
 			const classMatch = line.match(/class'([^']+)'\.$/i);
@@ -231,32 +203,17 @@ export class UnrealData {
 			if (!objectType || objectType instanceof ClassReference) {
 				return objectType;
 			}
-			return this.getClassFromContext(
-				`${objectType.getName()}.`,
-				fromClass,
-				localVariables,
-			);
+			return this.getClassFromContext(`${objectType.getName()}.`, fromClass, localVariables);
 		}
 
-		const classReference = this.getClassFromContext(
-			`${objects[0]}.`,
-			fromClass,
-			localVariables,
-		);
+		const classReference = this.getClassFromContext(`${objects[0]}.`, fromClass, localVariables);
 		if (classReference) {
-			return this.getClassFromContext(
-				`${objects.slice(1).join(".")}.`,
-				classReference,
-			);
+			return this.getClassFromContext(`${objects.slice(1).join(".")}.`, classReference);
 		}
 		return null;
 	}
 
-	public getObjectType(
-		entity: SymbolEntity,
-		itsClass?: ClassReference,
-		secondaryLevel?: number,
-	): SymbolEntity | null {
+	public getObjectType(entity: SymbolEntity, itsClass?: ClassReference, secondaryLevel?: number): SymbolEntity | null {
 		if (entity instanceof ClassReference) {
 			return entity;
 		}
@@ -293,16 +250,12 @@ export class UnrealData {
 		return null;
 	}
 
-	public getClassFromFileName(
-		fileName: string | undefined,
-	): ClassReference | null {
+	public getClassFromFileName(fileName: string | undefined): ClassReference | null {
 		if (!fileName) {
 			return null;
 		}
 		for (const classReference of this.classes) {
-			if (
-				classReference.getFileName().toLowerCase() === fileName.toLowerCase()
-			) {
+			if (classReference.getFileName().toLowerCase() === fileName.toLowerCase()) {
 				return classReference;
 			}
 		}
@@ -342,9 +295,7 @@ export class UnrealData {
 			this.fileNames.splice(fileIndex, 1);
 		}
 
-		const completionIndex = this.completionsForFile.findIndex(
-			(completion) => completion.fileName === fileName,
-		);
+		const completionIndex = this.completionsForFile.findIndex((completion) => completion.fileName === fileName);
 		if (completionIndex !== -1) {
 			this.completionsForFile.splice(completionIndex, 1);
 		}
@@ -357,9 +308,7 @@ export class UnrealData {
 
 	public getAutoCompleteList(options: GetAutoCompleteListOptions): string[] {
 		if (options.fromClass) {
-			const { variables, functions, isParsing } = this.getCompletionsFromClass(
-				options.fromClass,
-			);
+			const { variables, functions, isParsing } = this.getCompletionsFromClass(options.fromClass);
 			if (isParsing) {
 				return ["parsing..."];
 			}
@@ -369,12 +318,8 @@ export class UnrealData {
 			const hiddenClass = this.getClass("HiddenFunctions");
 			if (hiddenClass) {
 				const completion = this.getCompletionsFromClass(hiddenClass);
-				this.inbuiltFunctions = completion.isParsing
-					? []
-					: completion.functions;
-				this.inbuiltVariables = completion.isParsing
-					? []
-					: completion.variables;
+				this.inbuiltFunctions = completion.isParsing ? [] : completion.functions;
+				this.inbuiltVariables = completion.isParsing ? [] : completion.variables;
 			}
 		}
 		return this.filterRelevantItems(
@@ -391,33 +336,21 @@ export class UnrealData {
 		const variableCompletions = options.hasNoVariables
 			? []
 			: variables
-					.filter((variable) =>
-						variable
-							.getName()
-							.toLowerCase()
-							.includes(options.word.toLowerCase()),
-					)
+					.filter((variable) => variable.getName().toLowerCase().includes(options.word.toLowerCase()))
 					.map((variable) => {
 						return `${variable.getName()}\t${variable.getModifiers()}${variable.getName()}`;
 					});
 		const functionCompletions = options.hasNoFunctions
 			? []
 			: functions
-					.filter((func) =>
-						func.getName().toLowerCase().includes(options.word.toLowerCase()),
-					)
+					.filter((func) => func.getName().toLowerCase().includes(options.word.toLowerCase()))
 					.map((func) => {
 						return `${func.getName()}\t(${func.getArguments()})`;
 					});
 		const classCompletions = options.hasNoClasses
 			? []
 			: this.classes
-					.filter((classReference) =>
-						classReference
-							.getName()
-							.toLowerCase()
-							.includes(options.word.toLowerCase()),
-					)
+					.filter((classReference) => classReference.getName().toLowerCase().includes(options.word.toLowerCase()))
 					.map((classReference) => {
 						return classReference.getName();
 					});
@@ -428,12 +361,7 @@ export class UnrealData {
 				})
 			: [];
 
-		return [
-			...variableCompletions,
-			...functionCompletions,
-			...classCompletions,
-			...localVariableCompletions,
-		];
+		return [...variableCompletions, ...functionCompletions, ...classCompletions, ...localVariableCompletions];
 	}
 
 	public getCompletionsFromClass(entity: SymbolEntity): Completion {
@@ -447,17 +375,12 @@ export class UnrealData {
 			};
 		}
 
-		const classReference =
-			entity instanceof ClassReference
-				? entity
-				: this.getClassFromFileName(entity.getFileName());
+		const classReference = entity instanceof ClassReference ? entity : this.getClassFromFileName(entity.getFileName());
 
 		if (classReference) {
 			if (classReference.hasParsed()) {
-				const { functions, message: functionMessage } =
-					this.getFunctionsFromClass(classReference);
-				const { variables, message: variableMessage } =
-					this.getVariablesFromClass(classReference);
+				const { functions, message: functionMessage } = this.getFunctionsFromClass(classReference);
+				const { variables, message: variableMessage } = this.getVariablesFromClass(classReference);
 				return {
 					fileName: entity.getFileName(),
 					functions,
@@ -498,9 +421,7 @@ export class UnrealData {
 		const message = `### ${classReference.getName()}\t-    Functions ###`;
 		const parentClass = classReference.getParent();
 		return {
-			functions: parentClass
-				? [...functions, ...this.getFunctionsFromClass(parentClass).functions]
-				: functions,
+			functions: parentClass ? [...functions, ...this.getFunctionsFromClass(parentClass).functions] : functions,
 			message,
 		};
 	}
@@ -513,19 +434,13 @@ export class UnrealData {
 		const message = `### ${classReference.getName()}\t-    Variables ###`;
 		const parentClass = classReference.getParent();
 		return {
-			variables: parentClass
-				? [...variables, ...this.getVariablesFromClass(parentClass).variables]
-				: variables,
+			variables: parentClass ? [...variables, ...this.getVariablesFromClass(parentClass).variables] : variables,
 			message,
 		};
 	}
 
 	public saveCompletionsToFile(fileName: string): void {
-		if (
-			!this.completionsForFile.some(
-				(completion) => completion.fileName === fileName,
-			)
-		) {
+		if (!this.completionsForFile.some((completion) => completion.fileName === fileName)) {
 			this.completionsForFile.push({
 				fileName,
 				functions: this.functions,
@@ -535,9 +450,7 @@ export class UnrealData {
 	}
 
 	public loadCompletionsForFile(fileName: string): void {
-		const completion = this.completionsForFile.find(
-			(completion) => completion.fileName === fileName,
-		);
+		const completion = this.completionsForFile.find((completion) => completion.fileName === fileName);
 		if (completion) {
 			this.functions = completion.functions;
 			this.variables = completion.variables;
@@ -546,42 +459,25 @@ export class UnrealData {
 
 	public addClasses(classes: ClassReference[]): void {
 		const newClasses = classes.filter(
-			(classReference) =>
-				!this.classes.some(
-					(existingClass) =>
-						existingClass.getName() === classReference.getName(),
-				),
+			(classReference) => !this.classes.some((existingClass) => existingClass.getName() === classReference.getName()),
 		);
 		this.classes.push(...newClasses);
-		console.debug(
-			`Added ${newClasses.length} classes to UnrealData. Now ${this.classes.length} classes.`,
-		);
+		console.debug(`Added ${newClasses.length} classes to UnrealData. Now ${this.classes.length} classes.`);
 	}
 
 	public addFunctions(functions: UnrealFunction[]): void {
 		const newFunctions = functions.filter(
-			(func) =>
-				!this.functions.some(
-					(existingFunction) => existingFunction.getName() === func.getName(),
-				),
+			(func) => !this.functions.some((existingFunction) => existingFunction.getName() === func.getName()),
 		);
 		this.functions.push(...newFunctions);
-		console.debug(
-			`Added ${newFunctions.length} functions to UnrealData. Now ${this.functions.length} functions.`,
-		);
+		console.debug(`Added ${newFunctions.length} functions to UnrealData. Now ${this.functions.length} functions.`);
 	}
 
 	public addVariables(variables: VariableBase[]): void {
 		const newVariables = variables.filter(
-			(variable) =>
-				!this.variables.some(
-					(existingVariable) =>
-						existingVariable.getName() === variable.getName(),
-				),
+			(variable) => !this.variables.some((existingVariable) => existingVariable.getName() === variable.getName()),
 		);
 		this.variables.push(...newVariables);
-		console.debug(
-			`Added ${newVariables.length} variables to UnrealData. Now ${this.variables.length} variables.`,
-		);
+		console.debug(`Added ${newVariables.length} variables to UnrealData. Now ${this.variables.length} variables.`);
 	}
 }

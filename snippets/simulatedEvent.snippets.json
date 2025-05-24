@@ -1,12 +1,7 @@
 {
-	"Simulated Event": {
-		"prefix": "s-event",
-		"body": [
-			"simulated event ${1:EventName}(${2:Args})",
-			"{",
-			"    ${3:// body...}",
-			"}"
-		],
-		"description": "Snippet - simulated event"
-	}
+  "Simulated Event": {
+    "prefix": "s-event",
+    "body": ["simulated event ${1:EventName}(${2:Args})", "{", "    ${3:// body...}", "}"],
+    "description": "Snippet - simulated event"
+  }
 }

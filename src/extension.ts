@@ -1,13 +1,11 @@
 import * as vscode from "vscode";
 import { UnrealData } from "./data/UnrealData";
 import { ClassesCollector } from "./parser/ClassesCollector";
-import { UnrealPlugin } from "./plugin";
+import { UnrealPlugin } from "./plugin/UnrealPlugin";
 
-export function activate(context: vscode.ExtensionContext) {
+export function activate(context: vscode.ExtensionContext): void {
 	console.debug("activated");
-	vscode.window.showInformationMessage(
-		"Simple UnrealScript Extension is now active!",
-	);
+	vscode.window.showInformationMessage("Simple UnrealScript Extension is now active!");
 	const collector = new ClassesCollector();
 	const unrealData = new UnrealData();
 	const plugin = new UnrealPlugin(context, collector, unrealData);
@@ -16,5 +14,3 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(plugin.onCompletion());
 	context.subscriptions.push(plugin.onGoToDefinition());
 }
-
-export function deactivate() {}

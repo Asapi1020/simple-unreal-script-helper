@@ -11,13 +11,7 @@ export class UnrealStruct implements VariableBase {
 	private structLine: string;
 	private variables: UnrealVariable[] = [];
 
-	constructor(
-		name: string,
-		structLine: string,
-		lineNumber: number,
-		fileName: string,
-		description: string,
-	) {
+	constructor(name: string, structLine: string, lineNumber: number, fileName: string, description: string) {
 		this.name = name;
 		this.description = description;
 		this.fileName = fileName;

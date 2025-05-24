@@ -56,8 +56,7 @@ export class ClassReference {
 
 	public linkToParent(): void {
 		if (this.parentClassName) {
-			this.parentClass =
-				this.collectorReference.getClass(this.parentClassName) ?? null;
+			this.parentClass = this.collectorReference.getClass(this.parentClassName) ?? null;
 			if (this.parentClass) {
 				this.parentClass.setChild(this);
 			}
@@ -179,10 +178,7 @@ export class ClassReference {
 		if (this.isParsing) {
 			return;
 		}
-		const collector = new FunctionsCollector(
-			this.fileName,
-			this.collectorReference,
-		);
+		const collector = new FunctionsCollector(this.fileName, this.collectorReference);
 		this.isParsing = true;
 		await collector.start();
 		this.isParsing = false;

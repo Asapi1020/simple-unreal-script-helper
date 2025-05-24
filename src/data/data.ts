@@ -3,21 +3,14 @@ import * as vscode from "vscode";
 let isHelperPanelOn = false;
 let outputChannel: vscode.OutputChannel | undefined;
 
-export function printToPanel(
-	view: vscode.TextEditor,
-	text: string,
-	isOverwrite = true,
-	isLog = false,
-): void {
+export function printToPanel(view: vscode.TextEditor, text: string, isOverwrite = true, isLog = false): void {
 	isHelperPanelOn = true;
 
 	if (!outputChannel || isOverwrite) {
 		if (outputChannel) {
 			outputChannel.dispose();
 		}
-		outputChannel = vscode.window.createOutputChannel(
-			isLog ? "UnrealLog" : "UnrealScriptAutocomplete",
-		);
+		outputChannel = vscode.window.createOutputChannel(isLog ? "UnrealLog" : "UnrealScriptAutocomplete");
 	}
 
 	if (isOverwrite) {

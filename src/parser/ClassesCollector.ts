@@ -19,10 +19,7 @@ export class ClassesCollector {
 
 	public async start(options: CollectorOptions): Promise<void> {
 		if (options.openFolderArr) {
-			this.srcFolder =
-				options.openFolderArr.find((folder) =>
-					folder.includes("Development\\Src"),
-				) ?? "";
+			this.srcFolder = options.openFolderArr.find((folder) => folder.includes("Development\\Src")) ?? "";
 			if (await this.cacheExists()) {
 				console.log("cache exists. Loading...");
 				await this.loadClassesFromCache();
@@ -49,11 +46,7 @@ export class ClassesCollector {
 	}
 
 	public getClass(className: string): ClassReference | null {
-		return (
-			this.classes.find(
-				(c) => c.getName().toLowerCase() === className.toLowerCase(),
-			) ?? null
-		);
+		return this.classes.find((c) => c.getName().toLowerCase() === className.toLowerCase()) ?? null;
 	}
 
 	public addClass(
@@ -63,13 +56,7 @@ export class ClassesCollector {
 		fileName: string,
 	): ClassReference | undefined {
 		if (!this.getClass(className)) {
-			const classReference = new ClassReference(
-				className,
-				parentClass,
-				description,
-				fileName,
-				this,
-			);
+			const classReference = new ClassReference(className, parentClass, description, fileName, this);
 			this.classes.push(classReference);
 			return classReference;
 		}
@@ -98,12 +85,7 @@ export class ClassesCollector {
 	private async getInbuiltClasses(extensionPath: string): Promise<void> {
 		const inbuilt = ["Array", "Class", "HiddenFunctions"];
 		for (const name of inbuilt) {
-			const filePath = path.join(
-				extensionPath,
-				"src",
-				"in-built-classes",
-				`${name}.uc`,
-			);
+			const filePath = path.join(extensionPath, "src", "in-built-classes", `${name}.uc`);
 			const thread = this.saveClasses(filePath);
 			this.activeThreads.push(thread);
 		}
@@ -126,14 +108,12 @@ export class ClassesCollector {
 				break;
 			}
 
-			const isComment =
-				line.trim().startsWith("*") || line.trim().startsWith("/");
+			const isComment = line.trim().startsWith("*") || line.trim().startsWith("/");
 			if (!isComment) {
 				const classLine = line.toLowerCase();
 				const matchesInbuilt =
-					inbuiltClasses.some((cls) =>
-						classLine.includes(`class ${cls.toLowerCase()}`),
-					) || classLine.includes("class object");
+					inbuiltClasses.some((cls) => classLine.includes(`class ${cls.toLowerCase()}`)) ||
+					classLine.includes("class object");
 				if (matchesInbuilt) {
 					const className = path.basename(fileName).split(".")[0];
 					this.addClass(className, "", description, fileName);
@@ -161,13 +141,7 @@ export class ClassesCollector {
 			const json = await fs.promises.readFile(path, encoding);
 			const rawClasses: SerializableClass[] = JSON.parse(json);
 			const cacheClasses = rawClasses.map((raw) => {
-				const c = new ClassReference(
-					raw.name,
-					raw.parentClassName,
-					raw.description,
-					raw.fileName,
-					this,
-				);
+				const c = new ClassReference(raw.name, raw.parentClassName, raw.description, raw.fileName, this);
 				c.setCollectorReference(this);
 				return c;
 			});

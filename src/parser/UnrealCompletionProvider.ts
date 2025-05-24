@@ -1,9 +1,5 @@
 import * as vscode from "vscode";
-import type {
-	GetAutoCompleteListOptions,
-	UnrealData,
-} from "../data/UnrealData";
-import { UnrealVariable } from "../data/UnrealVariable";
+import type { GetAutoCompleteListOptions, UnrealData } from "../data/UnrealData";
 
 export class UnrealCompletionProvider implements vscode.CompletionItemProvider {
 	constructor(private unrealData: UnrealData) {}
@@ -13,9 +9,7 @@ export class UnrealCompletionProvider implements vscode.CompletionItemProvider {
 		position: vscode.Position,
 	): vscode.ProviderResult<vscode.CompletionItem[]> {
 		const line = document.lineAt(position.line);
-		const lineTextUpToCursor = line.text
-			.substring(0, position.character)
-			.trim();
+		const lineTextUpToCursor = line.text.substring(0, position.character).trim();
 		const tokens = lineTextUpToCursor.split(/\s+/);
 
 		const range = document.getWordRangeAtPosition(position);
@@ -32,10 +26,7 @@ export class UnrealCompletionProvider implements vscode.CompletionItemProvider {
 			return this.getKeywordCompletions();
 		}
 
-		const defaultPropertiesCompletions = this.getDefaultPropertiesCompletions(
-			document,
-			position,
-		);
+		const defaultPropertiesCompletions = this.getDefaultPropertiesCompletions(document, position);
 		if (defaultPropertiesCompletions) {
 			return defaultPropertiesCompletions;
 		}
@@ -43,14 +34,11 @@ export class UnrealCompletionProvider implements vscode.CompletionItemProvider {
 		const trimmedLine = line.text.trim();
 		const split = trimmedLine.split(/\s+/);
 		const firstWord = split[0]?.toLowerCase();
-		const isVarDecl =
-			["var", "local", "param"].includes(firstWord) ||
-			firstWord.includes("var(");
+		const isVarDecl = ["var", "local", "param"].includes(firstWord) || firstWord.includes("var(");
 		if (isVarDecl) {
 			const secondWord = split[1]?.toLowerCase();
 			const isNotArray = !secondWord?.includes("array");
-			const isTriggerChar =
-				trimmedLine.endsWith("<") || trimmedLine.endsWith("|");
+			const isTriggerChar = trimmedLine.endsWith("<") || trimmedLine.endsWith("|");
 
 			if (split.length > 1 && isNotArray && isTriggerChar) {
 				return this.getMetadataTagCompletions();
@@ -60,15 +48,10 @@ export class UnrealCompletionProvider implements vscode.CompletionItemProvider {
 		return undefined;
 	}
 
-	private getClassCompletions(
-		options: GetAutoCompleteListOptions,
-	): vscode.CompletionItem[] {
+	private getClassCompletions(options: GetAutoCompleteListOptions): vscode.CompletionItem[] {
 		const classes = this.unrealData.getAutoCompleteList(options);
 		return classes.map((name) => {
-			const item = new vscode.CompletionItem(
-				name,
-				vscode.CompletionItemKind.Class,
-			);
+			const item = new vscode.CompletionItem(name, vscode.CompletionItemKind.Class);
 			item.detail = "UnrealScript Class";
 			return item;
 		});
@@ -78,10 +61,7 @@ export class UnrealCompletionProvider implements vscode.CompletionItemProvider {
 		const config = vscode.workspace.getConfiguration("unrealscript");
 		const keywords = config.get<string[]>("unrealKeywords") || [];
 		return keywords.map((keyword) => {
-			const item = new vscode.CompletionItem(
-				keyword,
-				vscode.CompletionItemKind.Keyword,
-			);
+			const item = new vscode.CompletionItem(keyword, vscode.CompletionItemKind.Keyword);
 			item.detail = "UnrealScript Keyword";
 			return item;
 		});
@@ -118,9 +98,7 @@ export class UnrealCompletionProvider implements vscode.CompletionItemProvider {
 
 		const inBeginEndBlock = this.detectBeginEndRegion(document, position);
 		if (inBeginEndBlock) {
-			const classReference = this.unrealData.getClass(
-				inBeginEndBlock.className,
-			);
+			const classReference = this.unrealData.getClass(inBeginEndBlock.className);
 			if (!classReference) {
 				return null;
 			}
@@ -134,12 +112,7 @@ export class UnrealCompletionProvider implements vscode.CompletionItemProvider {
 				});
 			}
 			classReference.parseMe();
-			return [
-				new vscode.CompletionItem(
-					"just a moment...",
-					vscode.CompletionItemKind.Text,
-				),
-			];
+			return [new vscode.CompletionItem("just a moment...", vscode.CompletionItemKind.Text)];
 		}
 
 		return this.getClassCompletions({
@@ -149,10 +122,7 @@ export class UnrealCompletionProvider implements vscode.CompletionItemProvider {
 		});
 	}
 
-	private detectBeginEndRegion(
-		document: vscode.TextDocument,
-		position: vscode.Position,
-	): { className: string } | null {
+	private detectBeginEndRegion(document: vscode.TextDocument, position: vscode.Position): { className: string } | null {
 		const text = document.getText();
 		const lines = text.split("\n");
 		const beginRegex = /begin\s+object\s+(class\s*=\s*(\w+))?/i;
@@ -184,10 +154,7 @@ export class UnrealCompletionProvider implements vscode.CompletionItemProvider {
 		const config = vscode.workspace.getConfiguration("unrealscript");
 		const metadataTags = config.get<string[]>("metadataTags") || [];
 		return metadataTags.map((tag) => {
-			const item = new vscode.CompletionItem(
-				tag,
-				vscode.CompletionItemKind.Text,
-			);
+			const item = new vscode.CompletionItem(tag, vscode.CompletionItemKind.Text);
 			item.detail = "UnrealScript Metadata Tag";
 			return item;
 		});

@@ -3,13 +3,10 @@ import type { UnrealData } from "../data/UnrealData";
 import type { ClassesCollector } from "../parser/ClassesCollector";
 import { FunctionsCollector } from "../parser/FunctionsCollector";
 import { UnrealCompletionProvider } from "../parser/UnrealCompletionProvider";
-import { EventManager } from "./EventManager";
 import { UnrealDefinitionProvider } from "./UnrealDefinitionProvider";
 
 export function isUnrealScriptFile(document: vscode.TextDocument): boolean {
-	return (
-		document.languageId === "UnrealScript" || document.fileName.endsWith(".uc")
-	);
+	return document.languageId === "UnrealScript" || document.fileName.endsWith(".uc");
 }
 
 export class UnrealPlugin {
@@ -19,8 +16,6 @@ export class UnrealPlugin {
 	private isStillParsingClasses = true;
 	private isWantedToGoToDefinition = false;
 	private isWantedToAutocomplete = false;
-
-	private eventManager: EventManager | null = null;
 	private fileNames: string[] = [];
 
 	constructor(
@@ -72,10 +67,7 @@ export class UnrealPlugin {
 
 	public onGoToDefinition(): vscode.Disposable {
 		const provider = new UnrealDefinitionProvider(this.unrealData);
-		return vscode.languages.registerDefinitionProvider(
-			{ language: "UnrealScript", pattern: "**/*.uc" },
-			provider,
-		);
+		return vscode.languages.registerDefinitionProvider({ language: "UnrealScript", pattern: "**/*.uc" }, provider);
 	}
 
 	private async activated(editor: vscode.TextEditor): Promise<void> {
@@ -87,35 +79,16 @@ export class UnrealPlugin {
 
 		if (this.isFirstTime) {
 			this.isFirstTime = false;
-			this.eventManager = new EventManager();
-			// this.eventManager.goToDefinition.handle(this.onGoToDefinition.bind(this));
-			// this.eventManager.rebuildCache.handle(this.onRebuildCache.bind(this));
-			// this.eventManager.getClassReference.handle(
-			// 	this.onGetClassReference.bind(this),
-			// );
-			// this.eventManager.getAndOpenObject.handle(
-			// 	this.onGetAndOpenObject.bind(this),
-			// );
-
-			vscode.window.setStatusBarMessage(
-				"UnrealScriptAutocomplete: startup: start parsing classes...",
-				5000,
-			);
+			vscode.window.setStatusBarMessage("UnrealScriptAutocomplete: startup: start parsing classes...", 5000);
 			console.log("startup: start parsing classes...");
 
-			const folders = vscode.workspace.workspaceFolders?.map(
-				(folder) => folder.uri.fsPath,
-			);
+			const folders = vscode.workspace.workspaceFolders?.map((folder) => folder.uri.fsPath);
 			this.handleClassesCollector(editor, "", folders);
 			return;
 		}
 
 		const fileName = editor.document.fileName;
-		if (
-			!this.isStillParsingClasses &&
-			fileName &&
-			!this.fileNames.includes(fileName)
-		) {
+		if (!this.isStillParsingClasses && fileName && !this.fileNames.includes(fileName)) {
 			console.log("start parsing file:", fileName);
 			this.handleClassesCollector(editor, fileName, []);
 			this.fileNames.push(fileName);
@@ -171,9 +144,7 @@ export class UnrealPlugin {
 			await vscode.commands.executeCommand("editor.action.triggerSuggest");
 		} else if (this.isBuiltForCurrentFile) {
 			this.isBuiltForCurrentFile = false;
-			const classReference = this.unrealData.getClassFromFileName(
-				editor.document.fileName,
-			);
+			const classReference = this.unrealData.getClassFromFileName(editor.document.fileName);
 			if (!classReference) {
 				console.warn("classReference is null");
 				return;
