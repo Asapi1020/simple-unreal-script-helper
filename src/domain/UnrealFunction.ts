@@ -32,12 +32,16 @@ export class UnrealFunction implements SymbolEntity {
 		this.isFunction = isFunction;
 	}
 
+	public getIsFunction(): boolean {
+		return this.isFunction;
+	}
+
 	public getModifiers(): string {
 		return this.modifiers ? `${this.modifiers} ` : "";
 	}
 
 	public getReturnType(isPretty = false): string {
-		return isPretty && this.returnType ? `${this.returnType} ` : "";
+		return isPretty && this.returnType ? ` ${this.returnType}` : "";
 	}
 
 	public getName(isPretty = false): string {

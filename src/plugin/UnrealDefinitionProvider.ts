@@ -22,7 +22,8 @@ export class UnrealDefinitionProvider implements vscode.DefinitionProvider {
 
 		const activeFile = document.fileName;
 
-		const target = this.context.usecase.gotoDefinitionUsecase.resolveTarget(leftLine, word, line, activeFile);
+		console.debug(`resolveTarget - leftLine: ${leftLine}, word: ${word}, fullLine: ${line}`);
+		const target = this.context.usecase.definitionUsecase.resolveTarget(leftLine, word, activeFile);
 		if (!target) {
 			return;
 		}

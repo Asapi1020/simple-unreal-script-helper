@@ -3,6 +3,7 @@ import type { UnrealData } from "../infra/UnrealData";
 import type { Context } from "./Context";
 import { UnrealCompletionProvider } from "./UnrealCompletionProvider";
 import { UnrealDefinitionProvider } from "./UnrealDefinitionProvider";
+import { UnrealHoverProvider } from "./UnrealHoverProvider";
 
 export class UnrealPlugin {
 	private context: Context;
@@ -60,6 +61,13 @@ export class UnrealPlugin {
 	public onGoToDefinition(): vscode.Disposable {
 		const provider = new UnrealDefinitionProvider(this.context);
 		return vscode.languages.registerDefinitionProvider({ language: "UnrealScript", pattern: "**/*.uc" }, provider);
+	}
+
+	public onHover(): vscode.Disposable {
+		return vscode.languages.registerHoverProvider(
+			{ language: "UnrealScript", pattern: "**/*.uc" },
+			new UnrealHoverProvider(this.context),
+		);
 	}
 
 	private isUnrealScriptFile(document: vscode.TextDocument): boolean {

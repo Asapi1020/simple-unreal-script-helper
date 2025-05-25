@@ -15,4 +15,5 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(plugin.onActivated());
 	context.subscriptions.push(plugin.onCompletion());
 	context.subscriptions.push(plugin.onGoToDefinition());
+	context.subscriptions.push(plugin.onHover());
 }

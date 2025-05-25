@@ -142,7 +142,7 @@ export class FunctionsCollector {
 				const newLine = leftLine.includes("extends") ? line.trim().split("extends")[0] : line;
 				const structName = splitLeftLine.at(-1);
 				if (!structName) {
-					console.warn("Failed to parse struct name:", line);
+					// console.warn("Failed to parse struct name:", line);
 					continue;
 				}
 				structs.push(new UnrealStruct(structName, newLine, index, fileName, currentDocumentation));
@@ -165,11 +165,11 @@ export class FunctionsCollector {
 
 						const remaining = splitLeftLine.slice(i).join(" ");
 						if (remaining.includes("(") && remaining.includes(")")) {
-							console.warn(
-								"Failed to parse this function/event:\n",
-								line,
-								"(it probably should fail. If you see a line that fails that shouldn't, contact me)",
-							);
+							// console.warn(
+							// 	"Failed to parse this function/event:\n",
+							// 	line,
+							// 	"(it probably should fail. If you see a line that fails that shouldn't, contact me)",
+							// );
 							isFail = true;
 						}
 					}
@@ -245,11 +245,11 @@ export class FunctionsCollector {
 					consts.push(extractedConst);
 					currentDocumentation = "";
 				} else {
-					console.warn(
-						"Failed to parse const:\n",
-						line,
-						"(it probably should fail. If you see a line that fails that shouldn't, contact me)",
-					);
+					// console.warn(
+					// 	"Failed to parse const:\n",
+					// 	line,
+					// 	"(it probably should fail. If you see a line that fails that shouldn't, contact me)",
+					// );
 				}
 			}
 		}
