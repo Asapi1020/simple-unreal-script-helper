@@ -1,10 +1,11 @@
 import * as vscode from "vscode";
+import type { SymbolEntity, VariableBase } from "../domain/SymbolEntity";
+import { ClassReference } from "../domain/UnrealClassReference";
+import { UnrealFunction } from "../domain/UnrealFunction";
+import { UnrealStruct } from "../domain/UnrealStruct";
+import { UnrealVariable } from "../domain/UnrealVariable";
 import { extractUnclosedBracketContent } from "../parser/parser";
-import type { SymbolEntity, VariableBase } from "./SymbolEntity";
-import { ClassReference } from "./UnrealClassReference";
-import { UnrealFunction } from "./UnrealFunction";
-import { UnrealStruct } from "./UnrealStruct";
-import { UnrealVariable } from "./UnrealVariable";
+import type { Context } from "./Context";
 
 export interface GetObjectOptions {
 	hasNoClasses?: boolean;
@@ -33,6 +34,7 @@ export interface Completion {
 }
 
 export class UnrealData {
+	private context: Context;
 	private classes: ClassReference[] = [];
 	private completionsForFile: Completion[] = [];
 	private fileNames: string[] = [];
@@ -42,9 +44,17 @@ export class UnrealData {
 	private inbuiltFunctions: UnrealFunction[] = [];
 	private inbuiltVariables: VariableBase[] = [];
 
-	public linkClasses(): void {
-		for (const classReference of this.classes) {
-			classReference.linkToParent();
+	constructor(context: Context) {
+		this.context = context;
+	}
+
+	public linkClasses(classes: ClassReference[]): void {
+		for (const classReference of classes) {
+			const parentClassName = classReference.getParentClass();
+			const parentClass = this.getClass(parentClassName);
+			if (parentClass) {
+				classReference.linkToParent(parentClass);
+			}
 		}
 	}
 
@@ -111,8 +121,7 @@ export class UnrealData {
 	public getObjectFromClass(word: string, fromClass: ClassReference, options: GetObjectOptions): SymbolEntity | null {
 		console.debug(`get object '${word}' from class'${fromClass.getName()}' with`, options);
 		if (!fromClass.hasParsed()) {
-			console.log(`class'${fromClass.getName()}' not parsed yet, parse class now...`);
-			fromClass.parseMeRecursively();
+			console.log(`class'${fromClass.getName()}' not parsed yet.`);
 			return null;
 		}
 		if (!options.hasNoFunctions) {
@@ -271,6 +280,10 @@ export class UnrealData {
 		return this.getClassFromFileName(activeFile);
 	}
 
+	public getClasses(): ClassReference[] {
+		return this.classes;
+	}
+
 	public getFunction(functionName: string): UnrealFunction | null {
 		for (const func of [...this.functions, ...this.inbuiltFunctions]) {
 			if (func.getName().toLowerCase() === functionName.toLowerCase()) {
@@ -389,8 +402,6 @@ export class UnrealData {
 					variableMessage,
 				};
 			}
-
-			classReference.parseMe();
 			return {
 				fileName: entity.getFileName(),
 				functions: [],
@@ -407,7 +418,7 @@ export class UnrealData {
 		};
 	}
 
-	public setCompletionsFromClass(entity: SymbolEntity): void {
+	private setCompletionsFromClass(entity: SymbolEntity): void {
 		const completion = this.getCompletionsFromClass(entity);
 		this.functions = completion.functions;
 		this.variables = completion.variables;
@@ -439,7 +450,7 @@ export class UnrealData {
 		};
 	}
 
-	public saveCompletionsToFile(fileName: string): void {
+	private saveCompletionsToFile(fileName: string): void {
 		if (!this.completionsForFile.some((completion) => completion.fileName === fileName)) {
 			this.completionsForFile.push({
 				fileName,
@@ -463,6 +474,32 @@ export class UnrealData {
 		);
 		this.classes.push(...newClasses);
 		console.debug(`Added ${newClasses.length} classes to UnrealData. Now ${this.classes.length} classes.`);
+
+		this.linkClasses(newClasses);
+		for (const classReference of newClasses) {
+			this.setCompletionsFromClass(classReference);
+			this.saveCompletionsToFile(classReference.getFileName());
+		}
+	}
+
+	public safeLoadParentOf(classReference: ClassReference): ClassReference | null {
+		const parent = classReference.getParent();
+		if (parent) {
+			return parent;
+		}
+		const parentClassName = classReference.getParentClass();
+		const parentClass = this.getClass(parentClassName);
+		if (parentClass) {
+			classReference.linkToParent(parentClass);
+			return parentClass;
+		}
+		return null;
+	}
+
+	public parseClass(classReference: ClassReference): void {
+		if (classReference.isParsingProgress()) {
+			return;
+		}
 	}
 
 	public addFunctions(functions: UnrealFunction[]): void {

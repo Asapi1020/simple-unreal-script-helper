@@ -1,8 +1,17 @@
 import * as vscode from "vscode";
-import type { GetAutoCompleteListOptions, UnrealData } from "../data/UnrealData";
+import type { GetAutoCompleteListOptions, UnrealData } from "../infra/UnrealData";
+import type { Context } from "./Context";
 
 export class UnrealCompletionProvider implements vscode.CompletionItemProvider {
-	constructor(private unrealData: UnrealData) {}
+	private context: Context;
+
+	constructor(context: Context) {
+		this.context = context;
+	}
+
+	private get unrealData(): UnrealData {
+		return this.context.infra.unrealData;
+	}
 
 	provideCompletionItems(
 		document: vscode.TextDocument,
@@ -111,7 +120,7 @@ export class UnrealCompletionProvider implements vscode.CompletionItemProvider {
 					fromClass: classReference,
 				});
 			}
-			classReference.parseMe();
+			this.context.infra.functionsCollector.parseClass(classReference);
 			return [new vscode.CompletionItem("just a moment...", vscode.CompletionItemKind.Text)];
 		}
 

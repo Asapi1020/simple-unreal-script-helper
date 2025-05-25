@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import type { ClassReference } from "../data/UnrealClassReference";
-import type { GetObjectOptions, UnrealData } from "../data/UnrealData";
+import type { ClassReference } from "../domain/UnrealClassReference";
+import type { GetObjectOptions, UnrealData } from "../infra/UnrealData";
 
 interface DefinitionTarget {
 	file: string;
@@ -56,7 +56,7 @@ class GoToDefinitionHelper {
 				return classDef;
 			}
 
-			let parentClass = thisClass.safeLoadParent();
+			let parentClass = this.unrealData.safeLoadParentOf(thisClass);
 			while (parentClass) {
 				const parentsObjectDef = this.getObjectDef(word, parentClass, {
 					hasNoClasses: true,
@@ -64,7 +64,7 @@ class GoToDefinitionHelper {
 				if (parentsObjectDef) {
 					return parentsObjectDef;
 				}
-				parentClass = parentClass.safeLoadParent();
+				parentClass = this.unrealData.safeLoadParentOf(parentClass);
 			}
 			return null;
 		}
@@ -77,7 +77,7 @@ class GoToDefinitionHelper {
 		) {
 			switch (word.toLowerCase()) {
 				case "super": {
-					const parentClass = thisClass.safeLoadParent();
+					const parentClass = this.unrealData.safeLoadParentOf(thisClass);
 					if (parentClass) {
 						return this.getObjectDef(parentClass.getName(), this.unrealData);
 					}

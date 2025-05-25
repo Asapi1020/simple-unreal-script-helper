@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
-import type { ClassesCollector } from "../parser/ClassesCollector";
-import { FunctionsCollector } from "../parser/FunctionsCollector";
+import type { ClassMembers } from "./ClassMembers";
 import type { VariableBase } from "./SymbolEntity";
 import type { UnrealConst } from "./UnrealConst";
 import type { UnrealFunction } from "./UnrealFunction";
@@ -13,7 +12,6 @@ export class ClassReference {
 	private description: string;
 	private fileName: string;
 	private parentClassName: string;
-	private collectorReference: ClassesCollector;
 
 	private childrenClasses: ClassReference[] = [];
 	private functions: UnrealFunction[] = [];
@@ -24,18 +22,11 @@ export class ClassReference {
 	private isParsing = false;
 	private parentClass: ClassReference | null = null;
 
-	constructor(
-		name: string,
-		parentClassName: string,
-		description: string,
-		fileName: string,
-		collectorReference: ClassesCollector,
-	) {
+	constructor(name: string, parentClassName: string, description: string, fileName: string) {
 		this.name = name;
 		this.description = description;
 		this.fileName = fileName;
 		this.parentClassName = parentClassName;
-		this.collectorReference = collectorReference;
 	}
 
 	public getDescription(): string {
@@ -54,12 +45,10 @@ export class ClassReference {
 		return this.fileName;
 	}
 
-	public linkToParent(): void {
-		if (this.parentClassName) {
-			this.parentClass = this.collectorReference.getClass(this.parentClassName) ?? null;
-			if (this.parentClass) {
-				this.parentClass.setChild(this);
-			}
+	public linkToParent(parent: ClassReference): void {
+		this.parentClass = parent;
+		if (this.parentClass) {
+			this.parentClass.setChild(this);
 		}
 	}
 
@@ -87,13 +76,6 @@ export class ClassReference {
 		return this.parentClass;
 	}
 
-	public safeLoadParent(): ClassReference | null {
-		if (!this.parentClass) {
-			this.linkToParent();
-		}
-		return this.parentClass;
-	}
-
 	public getParentClass(): string {
 		return this.parentClassName;
 	}
@@ -102,16 +84,15 @@ export class ClassReference {
 		return this.bWasParsed;
 	}
 
-	public saveCompletions(
-		functions: UnrealFunction[],
-		variables: UnrealVariable[],
-		consts: UnrealConst[],
-		structs: UnrealStruct[],
-	): void {
-		this.functions = functions;
-		this.variables = variables;
-		this.consts = consts;
-		this.structs = structs;
+	public isParsingProgress(): boolean {
+		return this.isParsing;
+	}
+
+	public saveCompletions(members: ClassMembers): void {
+		this.functions = members.functions;
+		this.variables = members.variables;
+		this.consts = members.consts;
+		this.structs = members.structs;
 		this.bWasParsed = true;
 	}
 
@@ -128,17 +109,12 @@ export class ClassReference {
 	}
 
 	public getFunction(name: string): UnrealFunction | null {
-		if (!this.bWasParsed) {
-			this.parseMeRecursively();
-			return null;
-		}
 		for (const func of this.functions) {
 			if (name.toLowerCase() === func.getName().toLowerCase()) {
 				return func;
 			}
 		}
-		const parentClass = this.collectorReference.getClass(this.parentClassName);
-		return parentClass?.getFunction(name) ?? null;
+		return this.parentClass?.getFunction(name) ?? null;
 	}
 
 	public getVariables(): VariableBase[] {
@@ -146,53 +122,23 @@ export class ClassReference {
 	}
 
 	public getVariable(name: string): UnrealVariable | null {
-		if (!this.bWasParsed) {
-			this.parseMeRecursively();
-			return null;
-		}
 		for (const variable of this.variables) {
 			if (name.toLowerCase() === variable.getName().toLowerCase()) {
 				return variable;
 			}
 		}
 
-		const parentClass = this.collectorReference.getClass(this.parentClassName);
-		return parentClass?.getVariable(name) ?? null;
+		return this.parentClass?.getVariable(name) ?? null;
 	}
 
-	public setCollectorReference(collectorReference: ClassesCollector): void {
-		this.collectorReference = collectorReference;
-	}
-
-	public updateClass(parentClassName: string, description: string): void {
+	public updateClass(newParent: ClassReference, description: string): void {
 		const parent = this.getParent();
 		if (parent) {
 			parent.removeChild(this);
 		}
-		this.parentClassName = parentClassName;
+		this.parentClassName = newParent.getName();
 		this.description = description;
-		this.linkToParent();
-	}
-
-	public async parseMe(): Promise<void> {
-		if (this.isParsing) {
-			return;
-		}
-		const collector = new FunctionsCollector(this.fileName, this.collectorReference);
-		this.isParsing = true;
-		await collector.start();
-		this.isParsing = false;
-		const properties = collector.returnProperties();
-		this.functions = properties.functions;
-		this.variables = properties.variables;
-		this.consts = properties.consts;
-		this.structs = properties.structs;
-		this.bWasParsed = true;
-	}
-
-	public async parseMeRecursively(): Promise<void> {
-		await this.parseMe();
-		await this.parentClass?.parseMeRecursively();
+		this.linkToParent(newParent);
 	}
 
 	public insertDynamicSnippet(view: vscode.TextEditor): void {

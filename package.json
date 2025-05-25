@@ -10,14 +10,23 @@
     "type": "git",
     "url": "git@github.com:Asapi1020/simple-unreal-script-helper.git"
   },
-  "activationEvents": ["onStartupFinished", "onLanguage:unrealscript"],
+  "activationEvents": [
+    "onStartupFinished",
+    "onLanguage:unrealscript"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "languages": [
       {
         "id": "UnrealScript",
-        "extensions": [".uc", ".uci"],
-        "aliases": ["UnrealScript", "unrealscript"],
+        "extensions": [
+          ".uc",
+          ".uci"
+        ],
+        "aliases": [
+          "UnrealScript",
+          "unrealscript"
+        ],
         "configuration": "./language-configuration.json"
       }
     ],
@@ -26,7 +35,10 @@
         "language": "UnrealScript",
         "scopeName": "source.unrealscript",
         "path": "./syntaxes/UnrealScript.tmLanguage.json",
-        "fileTypes": ["uc", "uci"]
+        "fileTypes": [
+          "uc",
+          "uci"
+        ]
       }
     ],
     "themes": [
@@ -291,7 +303,9 @@
       }
     }
   },
-  "enabledApiProposals": ["extensionRuntime"],
+  "enabledApiProposals": [
+    "extensionRuntime"
+  ],
   "scripts": {
     "format": "biome check --write",
     "compile": "tsc -p .",
@@ -303,5 +317,8 @@
     "@types/node": "^22.15.17",
     "typescript": "^5.8.3",
     "vscode": "^1.1.37"
+  },
+  "dependencies": {
+    "@asp1020/type-utils": "^1.0.4"
   }
 }
