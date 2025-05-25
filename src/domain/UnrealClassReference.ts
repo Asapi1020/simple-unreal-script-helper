@@ -45,6 +45,10 @@ export class ClassReference {
 		return this.fileName;
 	}
 
+	public declaration(): string {
+		return `class ${this.name} extends ${this.parentClassName}`;
+	}
+
 	public linkToParent(parent: ClassReference): void {
 		this.parentClass = parent;
 		if (this.parentClass) {

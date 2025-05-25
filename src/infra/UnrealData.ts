@@ -58,7 +58,11 @@ export class UnrealData {
 		}
 	}
 
-	public getObject(word: string, outOf: SymbolEntity | UnrealData, options: GetObjectOptions): SymbolEntity | null {
+	public getObject(
+		word: string,
+		outOf: SymbolEntity | UnrealData,
+		options: GetObjectOptions = {},
+	): SymbolEntity | null {
 		const isArray = word.trim().endsWith("]");
 		const keyWord = isArray ? word.split("[")[0] : word;
 

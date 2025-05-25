@@ -1,13 +1,13 @@
 import { ActivateUsecase } from "./ActivateUsecase";
 import type { Context } from "./Context";
-import { gotoDefinitionUsecase } from "./GotoDefinitionUsecase";
+import { DefinitionUsecase } from "./DefinitionUsecase";
 
 export class Usecase {
 	public activeUsecase: ActivateUsecase;
-	public gotoDefinitionUsecase: gotoDefinitionUsecase;
+	public definitionUsecase: DefinitionUsecase;
 
 	constructor(context: Context) {
 		this.activeUsecase = new ActivateUsecase(context);
-		this.gotoDefinitionUsecase = new gotoDefinitionUsecase(context);
+		this.definitionUsecase = new DefinitionUsecase(context);
 	}
 }

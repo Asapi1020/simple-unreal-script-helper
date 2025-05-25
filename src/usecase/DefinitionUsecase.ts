@@ -1,6 +1,18 @@
-import type { ClassReference } from "../domain/UnrealClassReference";
+import type { SymbolEntity } from "../domain/SymbolEntity";
+import { ClassReference } from "../domain/UnrealClassReference";
+import { UnrealConst } from "../domain/UnrealConst";
+import { UnrealFunction } from "../domain/UnrealFunction";
+import { UnrealStruct } from "../domain/UnrealStruct";
+import { UnrealVariable } from "../domain/UnrealVariable";
+import {
+	formatClass,
+	formatConst,
+	formatFunction,
+	formatStruct,
+	formatVariable,
+} from "../domain/definition/hoverFormat";
 import { endsWithOperator, isFunctionOrEvent, isInBracketVariable } from "../domain/parser/parser";
-import type { GetObjectOptions, UnrealData } from "../infra/UnrealData";
+import type { UnrealData } from "../infra/UnrealData";
 import type { Context } from "./Context";
 
 interface DefinitionTarget {
@@ -9,7 +21,7 @@ interface DefinitionTarget {
 	character: number;
 }
 
-export class gotoDefinitionUsecase {
+export class DefinitionUsecase {
 	private context: Context;
 
 	constructor(context: Context) {
@@ -20,9 +32,41 @@ export class gotoDefinitionUsecase {
 		return this.context.infra.unrealData;
 	}
 
-	public resolveTarget(leftLine: string, word: string, fullLine: string, activeFile: string): DefinitionTarget | null {
-		console.debug(`resolveTarget - leftLine: ${leftLine}, word: ${word}, fullLine: ${fullLine}`);
+	public resolveTarget(leftLine: string, word: string, activeFile: string): DefinitionTarget | null {
+		const target = this.findDefinition(leftLine, word, activeFile);
+		return target
+			? {
+					file: target.getFileName(),
+					line: target.getLineNumber(),
+					character: 0,
+				}
+			: null;
+	}
 
+	public resolveHoverText(leftLine: string, word: string, activeFile: string): string | null {
+		const definition = this.findDefinition(leftLine, word, activeFile);
+		if (!definition) {
+			return null;
+		}
+		if (definition instanceof ClassReference) {
+			return formatClass(definition);
+		}
+		if (definition instanceof UnrealFunction) {
+			return formatFunction(definition);
+		}
+		if (definition instanceof UnrealVariable) {
+			return formatVariable(definition);
+		}
+		if (definition instanceof UnrealConst) {
+			return formatConst(definition);
+		}
+		if (definition instanceof UnrealStruct) {
+			return formatStruct(definition);
+		}
+		return null;
+	}
+
+	private findDefinition(leftLine: string, word: string, activeFile: string): SymbolEntity | null {
 		const thisClass = this.unrealData.getClassFromFileName(activeFile);
 		if (!thisClass) {
 			console.warn("active class is null", activeFile);
@@ -46,7 +90,7 @@ export class gotoDefinitionUsecase {
 		}
 
 		if (leftLine.toLowerCase().endsWith("self.")) {
-			const objectDef = this.getObjectDef(word, thisClass, {
+			const objectDef = this.unrealData.getObject(word, thisClass, {
 				hasNoClasses: true,
 			});
 			return objectDef;
@@ -56,7 +100,7 @@ export class gotoDefinitionUsecase {
 			const contextString = this.extractContextString(leftLine);
 			const contextClass = this.unrealData.getClassFromContext(contextString, thisClass);
 			if (contextClass) {
-				return this.getObjectDef(word, contextClass, {
+				return this.unrealData.getObject(word, contextClass, {
 					hasNoClasses: true,
 				});
 			}
@@ -64,7 +108,7 @@ export class gotoDefinitionUsecase {
 		}
 
 		if (leftLine.toLowerCase().endsWith("class'")) {
-			const objectDef = this.getObjectDef(word, this.unrealData, {
+			const objectDef = this.unrealData.getObject(word, this.unrealData, {
 				hasNoFunctions: true,
 				hasNoVariables: true,
 			});
@@ -88,10 +132,10 @@ export class gotoDefinitionUsecase {
 		return staticTrimmed;
 	}
 
-	private getFunctionOrEventDefInAncestors(name: string, thisClass: ClassReference): DefinitionTarget | null {
+	private getFunctionOrEventDefInAncestors(name: string, thisClass: ClassReference): SymbolEntity | null {
 		let parentClass = this.unrealData.safeLoadParentOf(thisClass);
 		while (parentClass) {
-			const parentsObjectDef = this.getObjectDef(name, parentClass, {
+			const parentsObjectDef = this.unrealData.getObject(name, parentClass, {
 				hasNoClasses: true,
 			});
 			if (parentsObjectDef) {
@@ -100,42 +144,27 @@ export class gotoDefinitionUsecase {
 			parentClass = this.unrealData.safeLoadParentOf(parentClass);
 		}
 
-		const classDef = this.getObjectDef(name, this.unrealData, {
+		const classDef = this.unrealData.getObject(name, this.unrealData, {
 			hasNoFunctions: true,
 			hasNoVariables: true,
 		});
 		return classDef;
 	}
 
-	private getObjectDefFromClass(objectName: string, fromClass: ClassReference): DefinitionTarget | null {
+	private getObjectDefFromClass(objectName: string, fromClass: ClassReference): SymbolEntity | null {
 		switch (objectName.toLowerCase()) {
 			case "super": {
 				const parentClass = this.unrealData.safeLoadParentOf(fromClass);
-				return parentClass ? this.getObjectDef(parentClass.getName(), this.unrealData) : null;
+				return parentClass ? this.unrealData.getObject(parentClass.getName(), this.unrealData) : null;
 			}
 			case "self": {
 				const className = fromClass.getName();
-				return className ? this.getObjectDef(className, this.unrealData) : null;
+				return className ? this.unrealData.getObject(className, this.unrealData) : null;
 			}
 			default:
-				return this.getObjectDef(objectName, fromClass) ?? this.getObjectDef(objectName, this.unrealData);
+				return (
+					this.unrealData.getObject(objectName, fromClass) ?? this.unrealData.getObject(objectName, this.unrealData)
+				);
 		}
-	}
-
-	private getObjectDef(
-		word: string,
-		outOf: ClassReference | UnrealData,
-		options: GetObjectOptions = {},
-	): DefinitionTarget | null {
-		const object = this.unrealData.getObject(word, outOf, options);
-
-		if (object) {
-			return {
-				file: object.getFileName(),
-				line: object.getLineNumber(),
-				character: 0,
-			};
-		}
-		return null;
 	}
 }
