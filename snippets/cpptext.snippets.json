@@ -1,7 +1,7 @@
 {
-	"UC Cpptext Block": {
-		"prefix": "cpp",
-		"body": ["cpptext", "{", "\t$1", "}"],
-		"description": "Snippet - cpptext"
-	}
+  "UC Cpptext Block": {
+    "prefix": "cpp",
+    "body": ["cpptext", "{", "\t$1", "}"],
+    "description": "Snippet - cpptext"
+  }
 }

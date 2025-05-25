@@ -1,12 +1,7 @@
 {
-	"UC Foreach Loop": {
-		"prefix": "foreach",
-		"body": [
-			"foreach ${1:Array/Iterator Function}(${2:Class}, ${3:OutActor})",
-			"{",
-			"\t${4:OutActor}",
-			"}"
-		],
-		"description": "Snippet - foreach"
-	}
+  "UC Foreach Loop": {
+    "prefix": "foreach",
+    "body": ["foreach ${1:Array/Iterator Function}(${2:Class}, ${3:OutActor})", "{", "\t${4:OutActor}", "}"],
+    "description": "Snippet - foreach"
+  }
 }

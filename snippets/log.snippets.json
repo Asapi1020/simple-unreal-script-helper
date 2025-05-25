@@ -1,7 +1,7 @@
 {
-	"UC Log Statement": {
-		"prefix": "log",
-		"body": ["`log(${1:String or variable})"],
-		"description": "Snippet - log"
-	}
+  "UC Log Statement": {
+    "prefix": "log",
+    "body": ["`log(${1:String or variable})"],
+    "description": "Snippet - log"
+  }
 }

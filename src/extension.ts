@@ -1,20 +1,18 @@
-import * as vscode from "vscode";
-import { UnrealData } from "./data/UnrealData";
-import { ClassesCollector } from "./parser/ClassesCollector";
-import { UnrealPlugin } from "./plugin";
+import type * as vscode from "vscode";
+import { Driver } from "./driver/Driver";
+import { Infra } from "./infra/Infra";
+import { UnrealPlugin } from "./plugin/UnrealPlugin";
+import { Usecase } from "./usecase/Usecase";
 
-export function activate(context: vscode.ExtensionContext) {
+export function activate(context: vscode.ExtensionContext): void {
 	console.debug("activated");
-	vscode.window.showInformationMessage(
-		"Simple UnrealScript Extension is now active!",
-	);
-	const collector = new ClassesCollector();
-	const unrealData = new UnrealData();
-	const plugin = new UnrealPlugin(context, collector, unrealData);
+
+	const driver = new Driver(context.extensionPath);
+	const infra = new Infra({ driver });
+	const usecase = new Usecase({ driver, infra });
+	const plugin = new UnrealPlugin({ driver, infra, usecase });
 	context.subscriptions.push(plugin.onPostSave());
 	context.subscriptions.push(plugin.onActivated());
 	context.subscriptions.push(plugin.onCompletion());
 	context.subscriptions.push(plugin.onGoToDefinition());
 }
-
-export function deactivate() {}

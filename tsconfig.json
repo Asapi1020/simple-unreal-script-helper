@@ -1,12 +1,12 @@
 {
-	"compilerOptions": {
-		"target": "es6",
-		"lib": ["es6"],
-		"module": "commonjs",
-		"rootDir": "src",
-		"outDir": "dist",
-		"strict": true,
-		"esModuleInterop": true
-	},
-	"exclude": ["node_modules", ".vscode-test"]
+  "compilerOptions": {
+    "target": "es6",
+    "lib": ["es6"],
+    "module": "commonjs",
+    "rootDir": "src",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true
+  },
+  "exclude": ["node_modules", ".vscode-test"]
 }
