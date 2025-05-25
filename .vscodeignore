@@ -1,7 +1,6 @@
-node_modules
-UnrealScriptIDE
-src
 .vscode
-README.md
-Biomefile
+node_modules
+src
+UnrealScriptIDE
 .gitignore
+biome.json

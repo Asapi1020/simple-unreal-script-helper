@@ -2,31 +2,37 @@
   "name": "simple-unreal-script-extension",
   "publisher": "asapi-1020",
   "displayName": "Simple Unreal Script Extension",
-  "version": "0.0.1",
-  "engines": {
-    "vscode": "^1.85.0"
-  },
+  "version": "0.0.3",
   "repository": {
     "type": "git",
     "url": "git@github.com:Asapi1020/simple-unreal-script-helper.git"
   },
-  "activationEvents": [
-    "onStartupFinished",
-    "onLanguage:unrealscript"
-  ],
   "main": "./dist/extension.js",
+  "scripts": {
+    "clean": "rimraf dist",
+    "format": "biome check --write",
+    "compile": "node build.mjs",
+    "build": "vsce package",
+    "start-debug": "code --install-extension simple-unreal-script-extension-0.0.2.vsix"
+  },
+  "dependencies": {
+    "@asp1020/type-utils": "^1.0.4"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^22.15.17",
+    "@types/vscode": "^1.100.0",
+    "esbuild": "^0.25.4",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.8.3"
+  },
+  "activationEvents": ["onLanguage:UnrealScript"],
   "contributes": {
     "languages": [
       {
         "id": "UnrealScript",
-        "extensions": [
-          ".uc",
-          ".uci"
-        ],
-        "aliases": [
-          "UnrealScript",
-          "unrealscript"
-        ],
+        "extensions": [".uc", ".uci"],
+        "aliases": ["UnrealScript", "unrealscript"],
         "configuration": "./language-configuration.json"
       }
     ],
@@ -35,10 +41,7 @@
         "language": "UnrealScript",
         "scopeName": "source.unrealscript",
         "path": "./syntaxes/UnrealScript.tmLanguage.json",
-        "fileTypes": [
-          "uc",
-          "uci"
-        ]
+        "fileTypes": ["uc", "uci"]
       }
     ],
     "themes": [
@@ -303,22 +306,8 @@
       }
     }
   },
-  "enabledApiProposals": [
-    "extensionRuntime"
-  ],
-  "scripts": {
-    "format": "biome check --write",
-    "compile": "tsc -p .",
-    "build": "vsce package",
-    "start-debug": "code --install-extension simple-unreal-script-extension-0.0.1.vsix"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
-    "@types/node": "^22.15.17",
-    "typescript": "^5.8.3",
-    "vscode": "^1.1.37"
-  },
-  "dependencies": {
-    "@asp1020/type-utils": "^1.0.4"
+  "enabledApiProposals": ["extensionRuntime"],
+  "engines": {
+    "vscode": "^1.100.0"
   }
 }
