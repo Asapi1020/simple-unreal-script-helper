@@ -13,7 +13,7 @@
     "format": "biome check --write",
     "compile": "node build.mjs",
     "build": "vsce package",
-    "start-debug": "code --install-extension simple-unreal-script-extension-0.0.2.vsix"
+    "start-debug": "code --install-extension simple-unreal-script-extension-0.0.3.vsix --force"
   },
   "dependencies": {
     "@asp1020/type-utils": "^1.0.4"

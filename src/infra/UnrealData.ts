@@ -4,7 +4,7 @@ import { ClassReference } from "../domain/UnrealClassReference";
 import { UnrealFunction } from "../domain/UnrealFunction";
 import { UnrealStruct } from "../domain/UnrealStruct";
 import { UnrealVariable } from "../domain/UnrealVariable";
-import { extractUnclosedBracketContent } from "../parser/parser";
+import { extractUnclosedBracketContent } from "../domain/parser/parser";
 import type { Context } from "./Context";
 
 export interface GetObjectOptions {
@@ -67,7 +67,7 @@ export class UnrealData {
 		}
 
 		if (outOf instanceof UnrealData) {
-			const object = this.getObjectFromData(keyWord, outOf, options);
+			const object = this.getObjectFromData(keyWord, options);
 			if (object) {
 				return object;
 			}
@@ -92,59 +92,6 @@ export class UnrealData {
 		return null;
 	}
 
-	public getObjectFromData(word: string, data: UnrealData, options: GetObjectOptions): SymbolEntity | null {
-		console.debug(`get object '${word}' from data with`, options);
-		if (!options.hasNoClasses) {
-			const classReference = data.getClass(word);
-			if (classReference) {
-				return classReference;
-			}
-		}
-
-		if (!options.hasNoFunctions) {
-			const functionReference = data.getFunction(word);
-			if (functionReference) {
-				return functionReference;
-			}
-		}
-
-		if (!options.hasNoVariables) {
-			const variableReference = data.getVariable(word);
-			if (variableReference) {
-				return variableReference;
-			}
-		}
-
-		return null;
-	}
-
-	public getObjectFromClass(word: string, fromClass: ClassReference, options: GetObjectOptions): SymbolEntity | null {
-		console.debug(`get object '${word}' from class'${fromClass.getName()}' with`, options);
-		if (!fromClass.hasParsed()) {
-			console.log(`class'${fromClass.getName()}' not parsed yet.`);
-			return null;
-		}
-		if (!options.hasNoFunctions) {
-			const functionReference = fromClass.getFunction(word);
-			if (functionReference) {
-				return functionReference;
-			}
-		}
-		if (!options.hasNoVariables) {
-			const variableReference = fromClass.getVariable(word);
-			if (variableReference) {
-				return variableReference;
-			}
-		}
-		return null;
-	}
-
-	public getVariableFromStruct(word: string, fromStruct: UnrealStruct): UnrealVariable | null {
-		console.debug(`get variable '${word}' from struct ${fromStruct.getName()}`);
-		const variable = fromStruct.getVariable(word);
-		return variable ?? null;
-	}
-
 	public getClassFromContext(
 		line: string,
 		fromClass?: ClassReference,
@@ -153,73 +100,54 @@ export class UnrealData {
 		const objectWord =
 			extractUnclosedBracketContent(line.slice(0, -1).split("{").pop() || line.slice(0, -1)) || line.slice(0, -1);
 		const objects = objectWord.split(".");
-		if (objects.length === 1) {
-			if (line.toLowerCase().endsWith("self.")) {
-				return this.getActiveClass();
-			}
 
-			if (line.toLowerCase().endsWith("super.")) {
-				return this.getActiveClass()?.getParent() ?? null;
+		if (objects.length > 1) {
+			const classReference = this.getClassFromContext(`${objects[0]}.`, fromClass, localVariables);
+			if (classReference) {
+				return this.getClassFromContext(`${objects.slice(1).join(".")}.`, classReference);
 			}
-
-			if (line.endsWith(").")) {
-				if (line.includes("super(")) {
-					const className = line.split("(").at(-1)?.slice(0, -2) ?? "";
-					return this.getClass(className) ?? null;
-				}
-
-				const preBracket = line.split("(")[0];
-				const object = fromClass
-					? (this.getObject(preBracket, fromClass, {
-							isSecondType: true,
-						}) ??
-						this.getObject(preBracket, this, {
-							isSecondType: true,
-						}))
-					: this.getObject(preBracket, this, {
-							isSecondType: true,
-						});
-				if (!object) {
-					return null;
-				}
-
-				const isArray = objectWord.trim().endsWith("]");
-				const type = this.getObjectType(object, fromClass, isArray ? 1 : 0);
-				if (!type || type instanceof ClassReference) {
-					return type;
-				}
-				return this.getClassFromContext(`${type.getName()}.`, fromClass, localVariables);
-			}
-
-			const classMatch = line.match(/class'([^']+)'\.$/i);
-			if (classMatch) {
-				const className = classMatch[1];
-				const classReference = this.getClass(className);
-				if (classReference) {
-					return classReference;
-				}
-			}
-			const object = this.getObject(objectWord, fromClass ?? this, {
-				hasNoClasses: true,
-				isSecondType: true,
-				localVariables: fromClass ? undefined : localVariables,
-			});
-			if (!object) {
-				return null;
-			}
-			const isArray = objectWord.trim().endsWith("]");
-			const objectType = this.getObjectType(object, fromClass, isArray ? 1 : 0);
-			if (!objectType || objectType instanceof ClassReference) {
-				return objectType;
-			}
-			return this.getClassFromContext(`${objectType.getName()}.`, fromClass, localVariables);
+			return null;
 		}
 
-		const classReference = this.getClassFromContext(`${objects[0]}.`, fromClass, localVariables);
-		if (classReference) {
-			return this.getClassFromContext(`${objects.slice(1).join(".")}.`, classReference);
+		if (line.toLowerCase().endsWith("self.")) {
+			return this.getActiveClass();
 		}
-		return null;
+
+		if (line.toLowerCase().endsWith("super.")) {
+			return this.getActiveClass()?.getParent() ?? null;
+		}
+
+		if (line.endsWith(").")) {
+			if (line.includes("super(")) {
+				const className = line.split("(").at(-1)?.slice(0, -2) ?? "";
+				return this.getClass(className);
+			}
+
+			const object = this.getObjectBeforeBracket(line, objectWord, fromClass, localVariables);
+			return object;
+		}
+
+		const staticClass = this.getStaticClass(line);
+		if (staticClass) {
+			return staticClass;
+		}
+		const object = this.getObject(objectWord, fromClass ?? this, {
+			hasNoClasses: true,
+			isSecondType: true,
+			localVariables: fromClass ? undefined : localVariables,
+		});
+		if (!object) {
+			return null;
+		}
+		const isArray = objectWord.trim().endsWith("]");
+		const objectType = this.getObjectType(object, fromClass, isArray ? 1 : 0);
+		if (!objectType) {
+			return null;
+		}
+		if (objectType instanceof ClassReference) {
+			return objectType;
+		}
+		return this.getClassFromContext(`${objectType.getName()}.`, fromClass, localVariables);
 	}
 
 	public getObjectType(entity: SymbolEntity, itsClass?: ClassReference, secondaryLevel?: number): SymbolEntity | null {
@@ -516,5 +444,99 @@ export class UnrealData {
 		);
 		this.variables.push(...newVariables);
 		console.debug(`Added ${newVariables.length} variables to UnrealData. Now ${this.variables.length} variables.`);
+	}
+
+	private getObjectFromData(word: string, options: GetObjectOptions): SymbolEntity | null {
+		console.debug(`get object '${word}' from data with`, options);
+		if (!options.hasNoClasses) {
+			const classReference = this.getClass(word);
+			if (classReference) {
+				return classReference;
+			}
+		}
+
+		if (!options.hasNoFunctions) {
+			const functionReference = this.getFunction(word);
+			if (functionReference) {
+				return functionReference;
+			}
+		}
+
+		if (!options.hasNoVariables) {
+			const variableReference = this.getVariable(word);
+			if (variableReference) {
+				return variableReference;
+			}
+		}
+
+		return null;
+	}
+
+	private getObjectFromClass(word: string, fromClass: ClassReference, options: GetObjectOptions): SymbolEntity | null {
+		console.debug(`get object '${word}' from class'${fromClass.getName()}' with`, options);
+		if (!fromClass.hasParsed()) {
+			console.log(`class'${fromClass.getName()}' not parsed yet.`);
+			return null;
+		}
+		if (!options.hasNoFunctions) {
+			const functionReference = fromClass.getFunction(word);
+			if (functionReference) {
+				return functionReference;
+			}
+		}
+		if (!options.hasNoVariables) {
+			const variableReference = fromClass.getVariable(word);
+			if (variableReference) {
+				return variableReference;
+			}
+		}
+		return null;
+	}
+
+	private getVariableFromStruct(word: string, fromStruct: UnrealStruct): UnrealVariable | null {
+		console.debug(`get variable '${word}' from struct ${fromStruct.getName()}`);
+		const variable = fromStruct.getVariable(word);
+		return variable ?? null;
+	}
+
+	private getObjectBeforeBracket(
+		line: string,
+		objectWord: string,
+		fromClass?: ClassReference,
+		localVariables?: UnrealVariable[],
+	): ClassReference | null {
+		const preBracket = line.split("(")[0];
+		const object = fromClass
+			? (this.getObject(preBracket, fromClass, {
+					isSecondType: true,
+				}) ??
+				this.getObject(preBracket, this, {
+					isSecondType: true,
+				}))
+			: this.getObject(preBracket, this, {
+					isSecondType: true,
+				});
+		if (!object) {
+			return null;
+		}
+
+		const isArray = objectWord.trim().endsWith("]");
+		const type = this.getObjectType(object, fromClass, isArray ? 1 : 0);
+		if (!type || type instanceof ClassReference) {
+			return type;
+		}
+		return this.getClassFromContext(`${type.getName()}.`, fromClass, localVariables);
+	}
+
+	private getStaticClass(line: string): ClassReference | null {
+		const classMatch = line.match(/class'([^']+)'\.$/i);
+		if (classMatch) {
+			const className = classMatch[1];
+			const classReference = this.getClass(className);
+			if (classReference) {
+				return classReference;
+			}
+		}
+		return null;
 	}
 }

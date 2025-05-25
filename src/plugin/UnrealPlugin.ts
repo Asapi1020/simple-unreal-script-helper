@@ -58,7 +58,7 @@ export class UnrealPlugin {
 	}
 
 	public onGoToDefinition(): vscode.Disposable {
-		const provider = new UnrealDefinitionProvider(this.unrealData);
+		const provider = new UnrealDefinitionProvider(this.context);
 		return vscode.languages.registerDefinitionProvider({ language: "UnrealScript", pattern: "**/*.uc" }, provider);
 	}
 
